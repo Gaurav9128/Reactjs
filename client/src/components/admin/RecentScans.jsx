@@ -15,7 +15,7 @@ const RecentScans = () => {
   const loadScans = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/recent-scans"
+        `${import.meta.env.VITE_API_URL}/api/recent-scans`
       );
 
       setScans(res.data.scans || []);

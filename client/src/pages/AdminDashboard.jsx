@@ -27,7 +27,7 @@ const AdminDashboard = () => {
   const loadDashboard = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/dashboard/stats"
+        `${import.meta.env.VITE_API_URL}/api/admin/dashboard/stats`
       );
 
       setStats(res.data.data);
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
   const loadRecentAttendance = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/dashboard/recent-attendance"
+        `${import.meta.env.VITE_API_URL}/api/admin/dashboard/recent-attendance`
       );
 
       setRecentAttendance(res.data.attendance);
@@ -71,7 +71,7 @@ const AdminDashboard = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/attendance/end-day"
+        `${import.meta.env.VITE_API_URL}/api/attendance/end-day`
       );
 
       await Swal.fire({

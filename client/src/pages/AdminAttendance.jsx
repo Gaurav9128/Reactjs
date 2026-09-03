@@ -17,7 +17,7 @@ const AdminAttendance = () => {
   ) => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/admin/attendance",
+        `${import.meta.env.VITE_API_URL}/api/admin/attendance`,
         {
           params: {
             search: searchText,
@@ -40,7 +40,7 @@ const AdminAttendance = () => {
 
   const exportExcel = () => {
     window.location.href =
-      "http://localhost:5000/api/export/attendance/all";
+      `${import.meta.env.VITE_API_URL}/api/export/attendance/all`;
   };
 
   const printAttendance = () => {

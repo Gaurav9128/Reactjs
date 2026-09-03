@@ -75,7 +75,7 @@ const QRScanner = ({ setResult, scanType }) => {
               } catch {}
 
               const res = await axios.post(
-                "http://localhost:5000/api/attendance/scan",
+                `${import.meta.env.VITE_API_URL}/api/attendance/scan`,
                 {
                   ticketNumber,
                   type: scanType,

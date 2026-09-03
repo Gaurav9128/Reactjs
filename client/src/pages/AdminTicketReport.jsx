@@ -15,7 +15,8 @@ const AdminTicketReport = () => {
     try {
 
       const res = await axios.get(
-        "http://localhost:5000/api/report/tickets"
+        `${import.meta.env.VITE_API_URL}/api/report/tickets`
+        
       );
 
       setTickets(res.data.tickets);

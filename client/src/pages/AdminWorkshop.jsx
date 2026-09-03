@@ -30,7 +30,8 @@ const AdminWorkshop = () => {
   const loadWorkshop = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/workshop"
+        `${import.meta.env.VITE_API_URL}/api/workshop`
+        
       );
 
       const data = res.data.workshop;
@@ -90,14 +91,14 @@ const AdminWorkshop = () => {
       if (isCreated) {
 
         res = await axios.put(
-          "http://localhost:5000/api/workshop",
+          `${import.meta.env.VITE_API_URL}/api/workshop`,
           workshop
         );
 
       } else {
 
         res = await axios.post(
-          "http://localhost:5000/api/workshop/create",
+          `${import.meta.env.VITE_API_URL}/api/workshop/create`,
           workshop
         );
 

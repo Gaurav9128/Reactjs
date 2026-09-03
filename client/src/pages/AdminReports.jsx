@@ -7,28 +7,28 @@ const reports = [
     icon: "👨‍🎓",
     description: "Registered Students List",
     view: "/admin/students",
-    export: "http://localhost:5000/api/export/students",
+    export: `${import.meta.env.VITE_API_URL}/api/export/students`,
   },
   {
     title: "Attendance Report",
     icon: "✅",
     description: "Day Wise Attendance",
     view: "/admin/attendance",
-    export: "http://localhost:5000/api/export/attendance/all",
+    export: `${import.meta.env.VITE_API_URL}/api/export/attendance/all`,
   },
   {
     title: "Break Report",
     icon: "☕",
     description: "Student Break History",
     view: "/admin/break-report",
-    export: "http://localhost:5000/api/export/break",
+    export: `${import.meta.env.VITE_API_URL}/api/export/break`,
   },
   {
     title: "Ticket Report",
     icon: "🎫",
     description: "Generated Workshop Tickets",
     view: "/admin/ticket-report",
-    export: "http://localhost:5000/api/export/tickets",
+    export: `${import.meta.env.VITE_API_URL}/api/export/tickets`,
   },
 ];
 
@@ -104,7 +104,7 @@ const AdminReports = () => {
           </p>
 
           <a
-            href="http://localhost:5000/api/export/attendance/all"
+            href={`${import.meta.env.VITE_API_URL}/api/export/attendance/all`}
             className="inline-block w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition"
           >
             Export Complete Report

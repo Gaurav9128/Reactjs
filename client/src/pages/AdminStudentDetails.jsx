@@ -18,7 +18,8 @@ const AdminStudentDetails = () => {
   const loadStudent = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/admin/students/${studentId}`
+        `${import.meta.env.VITE_API_URL}/api/admin/students/${studentId}`
+        
       );
 
       setStudent(res.data.student);

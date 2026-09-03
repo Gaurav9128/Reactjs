@@ -23,7 +23,7 @@ const ScannerForm = ({ setResult, scanType }) => {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/attendance/scan",
+        `${import.meta.env.VITE_API_URL}/api/attendance/scan`,
         {
           ticketNumber: ticketNumber.trim(),
           type: scanType,

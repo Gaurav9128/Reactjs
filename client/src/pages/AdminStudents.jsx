@@ -15,7 +15,8 @@ const AdminStudents = () => {
   const loadStudents = async (query = "") => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/admin/students/search?query=${query}`
+        `${import.meta.env.VITE_API_URL}/api/admin/students/search?query=${query}`
+        
       );
 
       setStudents(res.data.students);
