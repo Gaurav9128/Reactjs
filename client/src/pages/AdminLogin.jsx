@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_URL = "https://react-js-workshop-bboq.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -37,11 +37,27 @@ const AdminLogin = () => {
       return;
     }
 
+    if (!API_URL) {
+      console.error("VITE_API_URL is not configured.");
+
+      Swal.fire({
+        icon: "error",
+        title: "Configuration Error",
+        text: "API URL is not configured. Please contact the administrator.",
+      });
+
+      return;
+    }
+
     try {
       setLoading(true);
 
+      const loginURL = `${API_URL}/api/admin/login`;
+
+      console.log("Admin Login API:", loginURL);
+
       const res = await axios.post(
-        `${API_URL}/api/admin/login`,
+        loginURL,
         {
           email: formData.email,
           password: formData.password,
@@ -87,13 +103,20 @@ const AdminLogin = () => {
       let errorMessage = "Unable to connect to the server.";
 
       if (err.response) {
+        console.error("Server Response:", err.response.data);
+        console.error("Status:", err.response.status);
+
         errorMessage =
           err.response.data?.message ||
           "Invalid email or password.";
       } else if (err.request) {
+        console.error("No response received from server.");
+
         errorMessage =
           "Server is not responding. Please try again later.";
       } else {
+        console.error("Request Error:", err.message);
+
         errorMessage =
           "Something went wrong. Please try again.";
       }
