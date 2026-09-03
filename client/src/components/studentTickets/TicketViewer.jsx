@@ -2,12 +2,10 @@ import BoardingPass from "./BoardingPass.jsx";
 import EventPass from "./EventPass.jsx";
 import TechCard from "./TechCard.jsx";
 import ConferenceBadge from "./ConferenceBadge.jsx";
-import VipPass from "./VipPass";
+import VIPPass from "./VIPPass.jsx";
 
 const TicketViewer = ({ ticket }) => {
-
   switch (Number(ticket.dayNumber)) {
-
     case 1:
       return <BoardingPass ticket={ticket} />;
 
@@ -21,7 +19,7 @@ const TicketViewer = ({ ticket }) => {
       return <ConferenceBadge ticket={ticket} />;
 
     case 5:
-      return <VipPass ticket={ticket} />;
+      return <VIPPass ticket={ticket} />;
 
     default:
       return (
@@ -29,9 +27,7 @@ const TicketViewer = ({ ticket }) => {
           Invalid Ticket
         </div>
       );
-
   }
-
 };
 
 export default TicketViewer;
