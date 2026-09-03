@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import TicketViewer from "../components/studentTickets/TicketViewer";
+import TicketViewer from "../components/studentTickets/TicketViewer.jsx";
 
 const MyTickets = () => {
   const [tickets, setTickets] = useState([]);

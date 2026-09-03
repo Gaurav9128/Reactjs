@@ -1,7 +1,7 @@
-import BoardingPass from "./BoardingPass";
-import EventPass from "./EventPass";
-import TechCard from "./TechCard";
-import ConferenceBadge from "./ConferenceBadge";
+import BoardingPass from "./BoardingPass.jsx";
+import EventPass from "./EventPass.jsx";
+import TechCard from "./TechCard.jsx";
+import ConferenceBadge from "./ConferenceBadge.jsx";
 import VipPass from "./VipPass";
 
 const TicketViewer = ({ ticket }) => {
