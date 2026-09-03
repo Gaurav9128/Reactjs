@@ -61,23 +61,23 @@ if (ticket.isCancelled) {
    FIRST ENTRY
 ======================= */
 
+/* =======================
+   ENTRY
+======================= */
+
 if (type === "ENTRY") {
 
-    if (ticket.status !== "ENABLED") {
-        return res.status(400).json({
-            success: false,
-            message: "Only ENABLED ticket can mark attendance."
-        });
-    }
-
     if (ticket.attendance) {
+
         return res.status(400).json({
             success: false,
             message: "Attendance Already Marked"
         });
+
     }
 
     await Attendance.create({
+
         studentId: ticket.studentId._id,
         ticketId: ticket._id,
         workshopId: ticket.workshopId._id,
@@ -85,20 +85,37 @@ if (type === "ENTRY") {
         dayNumber: ticket.dayNumber,
         status: "PRESENT",
         attendanceTime: new Date()
+
     });
 
     ticket.attendance = true;
-    ticket.status = "ENABLED";
-    ticket.attendanceTime = new Date();
+ticket.status = "COMPLETED";
+ticket.attendanceTime = new Date();
 
-    await ticket.save();
+await ticket.save();
+
+await Ticket.findOneAndUpdate(
+  {
+    studentId: ticket.studentId._id,
+    dayNumber: ticket.dayNumber + 1,
+    status: "UPCOMING",
+  },
+  {
+    $set: {
+      status: "ENABLED",
+    },
+  }
+);
 
     return res.json({
+
         success: true,
         action: "ENTRY",
         message: "Attendance Marked Successfully",
         ticket
+
     });
+
 }
 
 /* =======================
@@ -107,18 +124,26 @@ if (type === "ENTRY") {
 
 if (type === "BREAK_OUT") {
 
-    if (ticket.status !== "ENABLED") {
+    if (!ticket.attendance) {
+
         return res.status(400).json({
+
             success: false,
-            message: "Student must be PRESENT before Break."
+            message: "Entry not marked yet."
+
         });
+
     }
 
     if (ticket.breakStatus === "BREAK_OUT") {
+
         return res.status(400).json({
+
             success: false,
             message: "Student already on break."
+
         });
+
     }
 
     ticket.breakStatus = "BREAK_OUT";
@@ -155,10 +180,14 @@ if (type === "BREAK_OUT") {
 if (type === "RETURN") {
 
     if (ticket.breakStatus !== "BREAK_OUT") {
+
         return res.status(400).json({
+
             success: false,
             message: "Student is not on break."
+
         });
+
     }
 
     const workshop = await Workshop.findById(ticket.workshopId);
@@ -287,7 +316,7 @@ exports.endDay = async (req, res) => {
       isCancelled: false,
       status: {
         $in: [
-          "ENABLED",
+          "PRESENT",
           "RETURNED",
         ],
       },

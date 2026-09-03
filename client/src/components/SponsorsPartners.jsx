@@ -1,6 +1,5 @@
 import React from "react";
 import { Mail, Phone, Users, Star } from "lucide-react";
-import PartnersSection from "./PartnersSection";
 
 const SponsorsPartners = () => {
   return (
@@ -82,7 +81,6 @@ const SponsorsPartners = () => {
         </div>
 
       </div>
-      <PartnersSection />
     </section>
   );
 };

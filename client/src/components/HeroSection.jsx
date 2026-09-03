@@ -92,7 +92,7 @@ const HeroSection = () => {
 
           {/* Info */}
           <div className="mt-6 space-y-2 text-white/80 text-base md:text-lg">
-            <p>📅 8 Sept – 12 Sept 2026</p>
+            <p>📅Tentative : 8 Sept – 12 Sept 2026</p>
             <p>⏰ 2:00 PM – 5:00 PM</p>
             <p>📍 Poornima University</p>
           </div>
