@@ -4,294 +4,335 @@ const BreakLog = require("../models/BreakLog");
 const Workshop = require("../models/Workshop");
 
 exports.scanAttendance = async (req, res) => {
+  try {
+    const { ticketNumber, type } = req.body;
 
-try{
+    // ==========================================
+    // VALIDATION
+    // ==========================================
 
-const { ticketNumber, type } = req.body;
-
-const ticket = await Ticket.findOne({
-ticketNumber
-})
-.populate("studentId")
-.populate("workshopId");
-
-if (!ticket) {
-  return res.status(404).json({
-    success: false,
-    message: "Ticket Not Found",
-  });
-}
-
-if (!type) {
-  return res.status(400).json({
-    success: false,
-    message: "Scan Type Required",
-  });
-}
-
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-
-const workshopDate = new Date(ticket.workshopDate);
-workshopDate.setHours(0, 0, 0, 0);
-
-if (today.getTime() !== workshopDate.getTime()) {
-  return res.status(400).json({
-    success: false,
-    message: "This ticket is not valid for today's workshop.",
-  });
-}
-
-if (ticket.status !== "ENABLED") {
-  return res.status(400).json({
-    success: false,
-    message: `This ticket is ${ticket.status}. Only ENABLED tickets can be scanned.`,
-  });
-}
-
-if (ticket.isCancelled) {
-  return res.status(400).json({
-    success: false,
-    message: "Ticket Cancelled",
-  });
-}
-
-
-/* =======================
-   FIRST ENTRY
-======================= */
-
-/* =======================
-   ENTRY
-======================= */
-
-if (type === "ENTRY") {
-
-    if (ticket.attendance) {
-
-        return res.status(400).json({
-            success: false,
-            message: "Attendance Already Marked"
-        });
-
+    if (!ticketNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Ticket Number Required",
+      });
     }
 
-    await Attendance.create({
+    if (!type) {
+      return res.status(400).json({
+        success: false,
+        message: "Scan Type Required",
+      });
+    }
 
+    const allowedTypes = ["ENTRY", "BREAK_OUT", "RETURN"];
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Scan Type",
+      });
+    }
+
+    // ==========================================
+    // FIND TICKET
+    // ==========================================
+
+    const ticket = await Ticket.findOne({
+      ticketNumber: ticketNumber.trim(),
+    })
+      .populate("studentId")
+      .populate("workshopId");
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket Not Found",
+      });
+    }
+
+    // ==========================================
+    // CANCELLED CHECK
+    // ==========================================
+
+    if (ticket.isCancelled) {
+      return res.status(400).json({
+        success: false,
+        message: "Ticket Cancelled",
+      });
+    }
+
+    // ==========================================
+    // STATUS CHECK
+    // ==========================================
+
+    // Ticket must remain ENABLED during the whole
+    // workshop day.
+    //
+    // IMPORTANT:
+    // ENTRY / BREAK_OUT / RETURN should NEVER
+    // change ticket.status to COMPLETED.
+    //
+    if (ticket.status !== "ENABLED") {
+      return res.status(400).json({
+        success: false,
+        message: `This ticket is ${ticket.status}. Only ENABLED tickets can be scanned.`,
+      });
+    }
+
+    // ==========================================
+    // DATE CHECK
+    // ==========================================
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const workshopDate = new Date(ticket.workshopDate);
+    workshopDate.setHours(0, 0, 0, 0);
+
+    if (today.getTime() !== workshopDate.getTime()) {
+      return res.status(400).json({
+        success: false,
+        message: "This ticket is not valid for today's workshop.",
+      });
+    }
+
+    // ==========================================
+    // ENTRY
+    // ==========================================
+
+    if (type === "ENTRY") {
+      // Already attended
+      if (ticket.attendance) {
+        return res.status(400).json({
+          success: false,
+          message: "Attendance Already Marked",
+        });
+      }
+
+      const attendanceTime = new Date();
+
+      // Create attendance
+      await Attendance.create({
         studentId: ticket.studentId._id,
         ticketId: ticket._id,
         workshopId: ticket.workshopId._id,
         workshopDate: ticket.workshopDate,
         dayNumber: ticket.dayNumber,
         status: "PRESENT",
-        attendanceTime: new Date()
+        attendanceTime,
+      });
 
-    });
+      // Mark attendance on ticket
+      ticket.attendance = true;
+      ticket.attendanceTime = attendanceTime;
 
-    ticket.attendance = true;
-ticket.status = "COMPLETED";
-ticket.attendanceTime = new Date();
+      // ==========================================
+      // IMPORTANT
+      // DO NOT DO:
+      //
+      // ticket.status = "COMPLETED";
+      //
+      // ==========================================
 
-await ticket.save();
+      ticket.status = "ENABLED";
 
-await Ticket.findOneAndUpdate(
-  {
-    studentId: ticket.studentId._id,
-    dayNumber: ticket.dayNumber + 1,
-    status: "UPCOMING",
-  },
-  {
-    $set: {
-      status: "ENABLED",
-    },
-  }
-);
+      await ticket.save();
 
-    return res.json({
-
+      return res.json({
         success: true,
         action: "ENTRY",
         message: "Attendance Marked Successfully",
-        ticket
-
-    });
-
-}
-
-/* =======================
-   BREAK OUT
-======================= */
-
-if (type === "BREAK_OUT") {
-
-    if (!ticket.attendance) {
-
-        return res.status(400).json({
-
-            success: false,
-            message: "Entry not marked yet."
-
-        });
-
+        ticket,
+      });
     }
 
-    if (ticket.breakStatus === "BREAK_OUT") {
+    // ==========================================
+    // BREAK OUT
+    // ==========================================
 
+    if (type === "BREAK_OUT") {
+      // Entry must be marked first
+      if (!ticket.attendance) {
         return res.status(400).json({
-
-            success: false,
-            message: "Student already on break."
-
+          success: false,
+          message: "Entry not marked yet.",
         });
+      }
 
-    }
+      // Student already on break
+      if (ticket.breakStatus === "BREAK_OUT") {
+        return res.status(400).json({
+          success: false,
+          message: "Student already on break.",
+        });
+      }
 
-    ticket.breakStatus = "BREAK_OUT";
-    ticket.breakOutTime = new Date();
+      const breakOutTime = new Date();
 
-    await ticket.save();
+      ticket.breakStatus = "BREAK_OUT";
+      ticket.breakOutTime = breakOutTime;
 
-    await BreakLog.create({
+      // IMPORTANT:
+      // Ticket remains ENABLED
+      ticket.status = "ENABLED";
 
+      await ticket.save();
+
+      await BreakLog.create({
         studentId: ticket.studentId._id,
         ticketId: ticket._id,
         workshopId: ticket.workshopId._id,
         dayNumber: ticket.dayNumber,
-        breakOutTime: new Date(),
-        status: "BREAK_OUT"
+        breakOutTime,
+        status: "BREAK_OUT",
+      });
 
-    });
-
-    return res.json({
-
+      return res.json({
         success: true,
         action: "BREAK OUT",
         message: "Student Sent For Break",
-        ticket
-
-    });
-
-}
-
-/* =======================
-   RETURN
-======================= */
-
-if (type === "RETURN") {
-
-    if (ticket.breakStatus !== "BREAK_OUT") {
-
-        return res.status(400).json({
-
-            success: false,
-            message: "Student is not on break."
-
-        });
-
+        ticket,
+      });
     }
 
-    const workshop = await Workshop.findById(ticket.workshopId);
+    // ==========================================
+    // RETURN FROM BREAK
+    // ==========================================
 
-    const breakLog = await BreakLog.findOne({
+    if (type === "RETURN") {
+      // Student must actually be on break
+      if (ticket.breakStatus !== "BREAK_OUT") {
+        return res.status(400).json({
+          success: false,
+          message: "Student is not on break.",
+        });
+      }
 
+      const workshop = await Workshop.findById(ticket.workshopId);
+
+      if (!workshop) {
+        return res.status(404).json({
+          success: false,
+          message: "Workshop Not Found",
+        });
+      }
+
+      // Find latest active break
+      const breakLog = await BreakLog.findOne({
         ticketId: ticket._id,
-        status: "BREAK_OUT"
+        status: "BREAK_OUT",
+      }).sort({ createdAt: -1 });
 
-    }).sort({ createdAt: -1 });
+      if (!breakLog) {
+        return res.status(400).json({
+          success: false,
+          message: "Break record not found.",
+        });
+      }
 
-    const returnTime = new Date();
+      const returnTime = new Date();
 
-    const minutes = Math.floor(
-
+      const minutes = Math.floor(
         (returnTime - breakLog.breakOutTime) / (1000 * 60)
+      );
 
-    );
+      breakLog.returnTime = returnTime;
+      breakLog.totalMinutes = minutes;
 
-    breakLog.returnTime = returnTime;
-    breakLog.totalMinutes = minutes;
+      ticket.returnTime = returnTime;
 
-    ticket.returnTime = returnTime;
+      // ==========================================
+      // RETURN WITHIN ALLOWED BREAK TIME
+      // ==========================================
 
-    if (minutes <= workshop.allowedBreakMinutes) {
-
+      if (minutes <= workshop.allowedBreakMinutes) {
         breakLog.status = "RETURNED";
 
         ticket.breakStatus = "RETURNED";
+
+        // IMPORTANT:
+        // Ticket remains ENABLED
+        ticket.status = "ENABLED";
 
         await breakLog.save();
         await ticket.save();
 
         return res.json({
-
-            success: true,
-            action: "RETURN",
-            message: "Student Returned Successfully",
-            ticket
-
+          success: true,
+          action: "RETURN",
+          message: "Student Returned Successfully",
+          ticket,
         });
+      }
 
-    }
+      // ==========================================
+      // LATE RETURN
+      // ==========================================
 
-    breakLog.status = "TIMEOUT";
+      breakLog.status = "TIMEOUT";
 
-    ticket.breakStatus = "TIMEOUT";
+      ticket.breakStatus = "TIMEOUT";
 
-    await breakLog.save();
-    await ticket.save();
+      // Ticket itself is still enabled for today's
+      // workshop, but future tickets are cancelled.
+      ticket.status = "ENABLED";
 
-    await Ticket.updateMany(
+      await breakLog.save();
+      await ticket.save();
 
+      // Cancel remaining future tickets
+      await Ticket.updateMany(
         {
-            studentId: ticket.studentId._id,
-            dayNumber: { $gt: ticket.dayNumber }
+          studentId: ticket.studentId._id,
+          dayNumber: { $gt: ticket.dayNumber },
+          isCancelled: false,
         },
-
         {
-            $set: {
-                status: "CANCELLED",
-                isCancelled: true
-            }
+          $set: {
+            status: "CANCELLED",
+            isCancelled: true,
+          },
         }
+      );
 
-    );
-
-    return res.json({
-
+      return res.json({
         success: true,
         action: "TIMEOUT",
         message: "Late Return. Remaining Tickets Cancelled.",
-        ticket
+        ticket,
+      });
+    }
 
+    // ==========================================
+    // INVALID STATE
+    // ==========================================
+
+    return res.status(400).json({
+      success: false,
+      message: "Invalid Ticket State",
     });
 
-}
+  } catch (err) {
+    console.log("SCAN ATTENDANCE ERROR:", err);
 
-return res.status(400).json({
-
-success:false,
-message:"Invalid Ticket State"
-
-});
-
-}catch(err){
-
-console.log(err);
-
-return res.status(500).json({
-
-success:false,
-message:err.message
-
-});
-
-}
-
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 };
+
+
+// =====================================================
+// END WORKSHOP DAY
+// =====================================================
 
 exports.endDay = async (req, res) => {
   try {
-
-    const workshop = await Workshop.findOne({ isActive: true });
+    const workshop = await Workshop.findOne({
+      isActive: true,
+    });
 
     if (!workshop) {
       return res.status(404).json({
@@ -300,40 +341,58 @@ exports.endDay = async (req, res) => {
       });
     }
 
-    // Today's Date Range
+    // ==========================================
+    // TODAY DATE RANGE
+    // ==========================================
+
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
     const end = new Date();
     end.setHours(23, 59, 59, 999);
 
-    // Today's Valid Tickets
+    // ==========================================
+    // TODAY'S ACTIVE TICKETS
+    // ==========================================
+    //
+    // IMPORTANT:
+    // Earlier you were searching:
+    //
+    // status: ["PRESENT", "RETURNED"]
+    //
+    // But ticket.status is actually ENABLED.
+    //
+    // Attendance status is PRESENT.
+    //
+    // So we must search ENABLED tickets.
+    //
     const tickets = await Ticket.find({
       workshopDate: {
         $gte: start,
         $lte: end,
       },
       isCancelled: false,
-      status: {
-        $in: [
-          "PRESENT",
-          "RETURNED",
-        ],
-      },
+      status: "ENABLED",
     });
 
     let completed = 0;
     let enabled = 0;
 
-    for (const ticket of tickets) {
+    // ==========================================
+    // COMPLETE TODAY'S TICKETS
+    // ==========================================
 
-      // Complete today's ticket
+    for (const ticket of tickets) {
       ticket.status = "COMPLETED";
+
       await ticket.save();
 
       completed++;
 
-      // Enable next day's ticket
+      // ==========================================
+      // ENABLE NEXT DAY
+      // ==========================================
+
       const nextTicket = await Ticket.findOne({
         studentId: ticket.studentId,
         dayNumber: ticket.dayNumber + 1,
@@ -342,31 +401,27 @@ exports.endDay = async (req, res) => {
       });
 
       if (nextTicket) {
-
         nextTicket.status = "ENABLED";
+
         await nextTicket.save();
 
         enabled++;
-
       }
-
     }
 
     return res.json({
       success: true,
-      message: `Day Completed Successfully.`,
+      message: "Day Completed Successfully.",
       completedTickets: completed,
       enabledTickets: enabled,
     });
 
   } catch (err) {
-
-    console.log(err);
+    console.log("END DAY ERROR:", err);
 
     return res.status(500).json({
       success: false,
       message: err.message,
     });
-
   }
 };
