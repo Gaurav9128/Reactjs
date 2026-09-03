@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_URL = import.meta.env.VITE_API_URL;
+// Backend URL from Vite environment variable
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -15,6 +17,7 @@ const AdminLogin = () => {
 
   const [loading, setLoading] = useState(false);
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -24,10 +27,12 @@ const AdminLogin = () => {
     }));
   };
 
+  // Handle admin login
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!formData.email || !formData.password) {
+    // Validate fields
+    if (!formData.email.trim() || !formData.password) {
       Swal.fire({
         icon: "warning",
         title: "Required Fields",
@@ -37,13 +42,14 @@ const AdminLogin = () => {
       return;
     }
 
-    if (!API_URL) {
-      console.error("VITE_API_URL is not configured.");
+    // Check environment variable
+    if (!backendUrl) {
+      console.error("VITE_BACKEND_URL is not configured.");
 
       Swal.fire({
         icon: "error",
         title: "Configuration Error",
-        text: "API URL is not configured. Please contact the administrator.",
+        text: "Backend URL is not configured. Please contact the administrator.",
       });
 
       return;
@@ -52,41 +58,47 @@ const AdminLogin = () => {
     try {
       setLoading(true);
 
-      const loginURL = `${API_URL}/api/admin/login`;
+      // Remove trailing slash from backend URL
+      const baseURL = backendUrl.replace(/\/$/, "");
+
+      // Admin login API
+      const loginURL = `${baseURL}/api/admin/login`;
 
       console.log("Admin Login API:", loginURL);
 
-      const res = await axios.post(
+      const response = await axios.post(
         loginURL,
         {
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
         },
         {
           headers: {
             "Content-Type": "application/json",
           },
+          timeout: 15000,
         }
       );
 
-      console.log("Login Response:", res.data);
+      console.log("Login Response:", response.data);
 
-      // Store admin information
-      if (res.data.admin) {
+      // Store admin details
+      if (response.data?.admin) {
         localStorage.setItem(
           "admin",
-          JSON.stringify(res.data.admin)
+          JSON.stringify(response.data.admin)
         );
       }
 
       // Store JWT token
-      if (res.data.token) {
+      if (response.data?.token) {
         localStorage.setItem(
           "adminToken",
-          res.data.token
+          response.data.token
         );
       }
 
+      // Success message
       await Swal.fire({
         icon: "success",
         title: "Login Successful",
@@ -95,27 +107,48 @@ const AdminLogin = () => {
         timer: 1500,
       });
 
+      // Redirect to admin dashboard
       navigate("/admin/dashboard");
 
-    } catch (err) {
-      console.error("Admin Login Error:", err);
+    } catch (error) {
+      console.error("Admin Login Error:", error);
 
       let errorMessage = "Unable to connect to the server.";
 
-      if (err.response) {
-        console.error("Server Response:", err.response.data);
-        console.error("Status:", err.response.status);
+      // Backend returned a response
+      if (error.response) {
+        console.error(
+          "Server Response:",
+          error.response.data
+        );
+
+        console.error(
+          "Status Code:",
+          error.response.status
+        );
 
         errorMessage =
-          err.response.data?.message ||
+          error.response.data?.message ||
+          error.response.data?.error ||
           "Invalid email or password.";
-      } else if (err.request) {
-        console.error("No response received from server.");
+      }
+
+      // Request sent but server did not respond
+      else if (error.request) {
+        console.error(
+          "No response received from server."
+        );
 
         errorMessage =
           "Server is not responding. Please try again later.";
-      } else {
-        console.error("Request Error:", err.message);
+      }
+
+      // Request setup error
+      else {
+        console.error(
+          "Request Error:",
+          error.message
+        );
 
         errorMessage =
           "Something went wrong. Please try again.";
@@ -151,6 +184,7 @@ const AdminLogin = () => {
 
         {/* Email */}
         <div className="mb-4">
+
           <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -169,10 +203,12 @@ const AdminLogin = () => {
             autoComplete="email"
             required
           />
+
         </div>
 
         {/* Password */}
         <div className="mb-6">
+
           <label
             htmlFor="password"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -191,6 +227,7 @@ const AdminLogin = () => {
             autoComplete="current-password"
             required
           />
+
         </div>
 
         {/* Login Button */}
