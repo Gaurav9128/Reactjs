@@ -32,7 +32,8 @@ const sendOtpEmail = async (email, otp) => {
         <p style="margin: 10px 0;"><strong>Let's connect and build something amazing together.</strong></p>
         <p style="color: #6b7280; font-size: 14px; margin: 10px 0;">React · Node.js · MongoDB · Express</p>
         <p style="text-align: center; margin-top: 15px;">
-          <a href="mailto:${process.env.EMAIL_USER || 'your-email@example.com'}" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">Get In Touch</a>
+          <a href="mailto:${process.env.EMAIL_USER || 'your-email@example.com'}" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">Get In Touch</a>
+          <a href="https://github.com/mohit31kumar" style="background: #333; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold;">GitHub</a>
         </p>
       </div>
       <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;" />
