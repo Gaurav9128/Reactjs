@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import adminApi from "../utils/adminApi";
 
 import Sidebar from "../components/admin/Sidebar";
 import DashboardCard from "../components/admin/DashboardCard";
@@ -26,8 +27,8 @@ const AdminDashboard = () => {
 
   const loadDashboard = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/dashboard/stats`
+      const res = await adminApi.get(
+        `/api/admin/dashboard/stats`
       );
 
       setStats(res.data.data);
@@ -42,8 +43,8 @@ const AdminDashboard = () => {
 
   const loadRecentAttendance = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/dashboard/recent-attendance`
+      const res = await adminApi.get(
+        `/api/admin/dashboard/recent-attendance`
       );
 
       setRecentAttendance(res.data.attendance);
@@ -70,8 +71,8 @@ const AdminDashboard = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/attendance/end-day`
+      const res = await adminApi.post(
+        `/api/attendance/end-day`
       );
 
       await Swal.fire({

@@ -1,15 +1,37 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 
 const Register = require("../models/Register");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: "Too many login attempts, please try again after 15 minutes",
+  },
+});
+
+router.use("/login", loginLimiter);
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await Register.findOne({ email });
+    const sanitizedEmail = String(email || "").trim();
+    const sanitizedPassword = String(password || "").trim();
+
+    if (!sanitizedEmail || !sanitizedPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required",
+      });
+    }
+
+    const user = await Register.findOne({ email: sanitizedEmail });
 
     if (!user) {
       return res.status(400).json({
@@ -18,7 +40,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(sanitizedPassword, user.password);
 
     if (!isMatch) {
       return res.status(400).json({

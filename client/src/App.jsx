@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
 import Navbar from "./components/Navbar";
 import HeroSection from "./components/HeroSection";
 import SpeakersSection from "./components/SpeakersSection";
@@ -20,6 +21,7 @@ import Dashboard from "./components/Dashboard";
 import Login from "./components/Login";
 import AdminStudents from "./pages/AdminStudents";
 import AdminLogin from "./pages/AdminLogin";
+import AdminRegister from "./pages/AdminRegister";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStudentDetails from "./pages/AdminStudentDetails";
 import AdminAttendance from "./pages/AdminAttendance";
@@ -79,15 +81,51 @@ function AppContent() {
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/students" element={<AdminStudents />} />
-        <Route path="/admin/students/:studentId" element={<AdminStudentDetails />} />
-        <Route path="/admin/attendance" element={<AdminAttendance />}/>
-        <Route path="/admin/workshop" element={<AdminWorkshop />}/>
-        <Route path="/admin/reports" element={<AdminReports />}/>
-        <Route path="/admin/break-report" element={<AdminBreakReport />}/>
-        <Route path="/admin/ticket-report" element={<AdminTicketReport />}/>
-         <Route path="/admin/attendance-scanner" element={<AdminAttendanceScanner />}/>
+        <Route path="/admin/dashboard" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
+        <Route path="/admin/students" element={
+          <AdminRoute>
+            <AdminStudents />
+          </AdminRoute>
+        } />
+        <Route path="/admin/students/:studentId" element={
+          <AdminRoute>
+            <AdminStudentDetails />
+          </AdminRoute>
+        } />
+        <Route path="/admin/attendance" element={
+          <AdminRoute>
+            <AdminAttendance />
+          </AdminRoute>
+        }/>
+        <Route path="/admin/workshop" element={
+          <AdminRoute>
+            <AdminWorkshop />
+          </AdminRoute>
+        }/>
+        <Route path="/admin/reports" element={
+          <AdminRoute>
+            <AdminReports />
+          </AdminRoute>
+        }/>
+        <Route path="/admin/break-report" element={
+          <AdminRoute>
+            <AdminBreakReport />
+          </AdminRoute>
+        }/>
+        <Route path="/admin/ticket-report" element={
+          <AdminRoute>
+            <AdminTicketReport />
+          </AdminRoute>
+        }/>
+         <Route path="/admin/attendance-scanner" element={
+          <AdminRoute>
+            <AdminAttendanceScanner />
+          </AdminRoute>
+        }/>
       </Routes>
 
       {!isAdminPage && <Footer />}

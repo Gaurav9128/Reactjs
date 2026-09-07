@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
+import adminApi from "../utils/adminApi";
 
 const AdminStudentDetails = () => {
   const { studentId } = useParams();
@@ -17,8 +18,8 @@ const AdminStudentDetails = () => {
 
   const loadStudent = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/students/${studentId}`
+      const res = await adminApi.get(
+        `/api/admin/students/${studentId}`
         
       );
 

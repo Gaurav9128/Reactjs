@@ -3,24 +3,38 @@ const Ticket = require("../models/Ticket");
 const Attendance = require("../models/Attendance");
 const BreakLog = require("../models/BreakLog");
 
+const isAdmin = (req) =>
+  req.user && ["SUPER_ADMIN", "SUB_ADMIN"].includes(req.user.role);
+
+const escapeRegExp = (string) =>
+  string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // ==========================================
 // Search Students
 // ==========================================
 
 exports.searchStudents = async (req, res) => {
   try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Admin access required",
+      });
+    }
+
     const { query } = req.query;
 
     let filter = {};
 
     if (query) {
+      const escaped = escapeRegExp(query);
       filter = {
         $or: [
-          { fullName: { $regex: query, $options: "i" } },
-          { email: { $regex: query, $options: "i" } },
-          { mobile: { $regex: query, $options: "i" } },
-          { college: { $regex: query, $options: "i" } },
-          { branch: { $regex: query, $options: "i" } },
+          { fullName: { $regex: escaped, $options: "i" } },
+          { email: { $regex: escaped, $options: "i" } },
+          { mobile: { $regex: escaped, $options: "i" } },
+          { college: { $regex: escaped, $options: "i" } },
+          { branch: { $regex: escaped, $options: "i" } },
         ],
       };
     }
@@ -46,6 +60,13 @@ exports.searchStudents = async (req, res) => {
 
 exports.getStudentDetails = async (req, res) => {
   try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Admin access required",
+      });
+    }
+
     const { studentId } = req.params;
 
     const student = await Register.findById(studentId).select("-password");
@@ -99,6 +120,12 @@ exports.getStudentDetails = async (req, res) => {
 
 exports.deleteStudent = async (req, res) => {
   try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Admin access required",
+      });
+    }
 
     const { studentId } = req.params;
 
