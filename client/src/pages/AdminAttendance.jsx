@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
+import adminApi from "../utils/adminApi";
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
@@ -16,8 +17,8 @@ const AdminAttendance = () => {
     selectedDay = day
   ) => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/attendance`,
+      const res = await adminApi.get(
+        `/api/admin/attendance`,
         {
           params: {
             search: searchText,

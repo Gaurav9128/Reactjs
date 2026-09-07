@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
 import { useNavigate } from "react-router-dom";
+import adminApi from "../utils/adminApi";
 
 const AdminStudents = () => {
   const [students, setStudents] = useState([]);
@@ -14,8 +15,8 @@ const AdminStudents = () => {
 
   const loadStudents = async (query = "") => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/students/search?query=${query}`
+      const res = await adminApi.get(
+        `/api/admin/students/search?query=${query}`
         
       );
 
