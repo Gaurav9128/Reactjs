@@ -31,6 +31,8 @@ import AdminBreakReport from "./pages/AdminBreakReport";
 import AdminTicketReport from "./pages/AdminTicketReport";
 import MyTickets from "./pages/MyTickets";
 import AdminAttendanceScanner from "./pages/AdminAttendanceScanner";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function Home() {
   return (
@@ -68,6 +70,8 @@ function AppContent() {
         <Route path="/workshop-schedule" element={<WorkshopSchedule />} />
         {/* <Route path="/register" element={<RegisterForm />} /> */}
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<PrivateRoute> <Dashboard /> </PrivateRoute>}/>
        
         <Route

@@ -285,9 +285,21 @@ const Login = () => {
                                 </span>
                             </p> */}
 
-                            {/* <p className="text-center text-gray-500 text-sm mt-2">
-                                First time using this portal? Please register before logging in.
-                            </p> */}
+                            <p className="text-center text-gray-500 text-sm mt-2">
+                                Forgot password?{" "}
+                                <span
+                                    onClick={() =>
+                                        navigate("/forgot-password")
+                                    }
+                                    className="text-cyan-400 cursor-pointer hover:underline font-semibold"
+                                >
+                                    Reset here
+                                </span>
+                            </p>
+
+                            {/* <p className="text-center text-gray-500 text-sm mt-2"> */}
+                                {/* First time using this portal? Please register before logging in. */}
+                            {/* </p>  */}
 
                         </form>
 

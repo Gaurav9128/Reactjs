@@ -1,21 +1,10 @@
 const express = require("express");
-const rateLimit = require("express-rate-limit");
 const router = express.Router();
 
 const Register = require("../models/Register");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: {
-    success: false,
-    message: "Too many login attempts, please try again after 15 minutes",
-  },
-});
-
-router.use("/login", loginLimiter);
+const { requestPasswordReset, resetPasswordWithOtp } = require("../controllers/authController");
 
 router.post("/login", async (req, res) => {
   try {
@@ -77,5 +66,9 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
+router.post("/forgot-password", requestPasswordReset);
+
+router.post("/reset-password", resetPasswordWithOtp);
 
 module.exports = router;
