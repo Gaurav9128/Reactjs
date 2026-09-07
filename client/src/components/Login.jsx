@@ -143,9 +143,9 @@ const Login = () => {
                             React Rajasthan
                         </h1>
 
-                        <p className="mt-3 text-gray-700">
+                        {/* <p className="mt-3 text-gray-700">
                             Event Login Portal
-                        </p>
+                        </p> */}
 
                     </div>
 
@@ -273,7 +273,7 @@ const Login = () => {
                                 )}
                             </button>
 
-                            <p className="text-center text-gray-400 mt-6">
+                            {/* <p className="text-center text-gray-400 mt-6">
                                 Don't have an account?{" "}
                                 <span
                                     onClick={() =>
@@ -283,11 +283,11 @@ const Login = () => {
                                 >
                                     Register Now
                                 </span>
-                            </p>
+                            </p> */}
 
-                            <p className="text-center text-gray-500 text-sm mt-2">
+                            {/* <p className="text-center text-gray-500 text-sm mt-2">
                                 First time using this portal? Please register before logging in.
-                            </p>
+                            </p> */}
 
                         </form>
 

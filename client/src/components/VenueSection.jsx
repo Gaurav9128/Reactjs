@@ -65,7 +65,7 @@ const VenueSection = () => {
                 <div>
                   <p className="text-xs font-bold text-[#7c3bed] uppercase tracking-wider">Location</p>
                   <p className="text-gray-600 font-medium text-sm mt-0.5">
-                    Plot No. IS-2027-2031, Ramchandrapura P.O. Vidhani Vatika Road Sitapura, Rajasthan 302022
+                    Seminar Hall 5th Floor
                   </p>
                 </div>
               </div>
@@ -78,7 +78,7 @@ const VenueSection = () => {
                 <div>
                   <p className="text-xs font-bold text-[#7c3bed] uppercase tracking-wider">Date</p>
                   <p className="text-gray-600 font-medium text-sm mt-0.5">
-                    Tentative - 10 Aug to 14 Aug  2026
+                    8th Sept to 12th Sept 2026
                   </p>
                 </div>
               </div>
@@ -91,7 +91,7 @@ const VenueSection = () => {
                 <div>
                   <p className="text-xs font-bold text-[#7c3bed] uppercase tracking-wider">Time</p>
                   <p className="text-gray-600 font-medium text-sm mt-0.5">
-                    9:00 AM Onwards
+                    2:00 PM - 5:00 PM
                   </p>
                 </div>
               </div>

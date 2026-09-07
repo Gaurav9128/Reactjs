@@ -92,16 +92,16 @@ const HeroSection = () => {
 
           {/* Info */}
           <div className="mt-6 space-y-2 text-white/80 text-base md:text-lg">
-            <p>📅Tentative : 8 Sept – 13 Sept 2026</p>
+            <p>📅Tentative : 8 Sept – 12 Sept 2026</p>
             <p>⏰ 2:00 PM – 5:00 PM</p>
             <p>📍 Poornima University</p>
           </div>
 
           {/* Buttons */}
-          <div  onClick={() => navigate("/register")} className="mt-8 flex flex-wrap gap-4 justify-center pb-2">
-            <button className="px-6 md:px-8 py-3 rounded-full bg-white text-black font-semibold hover:scale-105 transition transform">
+          <div  onClick={() => navigate("/")} className="mt-8 flex flex-wrap gap-4 justify-center pb-2">
+            {/* <button className="px-6 md:px-8 py-3 rounded-full bg-white text-black font-semibold hover:scale-105 transition transform">
               Register Now
-            </button>
+            </button> */}
 
             <button className="px-6 md:px-8 py-3 rounded-full border border-white/40 text-white hover:bg-white hover:text-black transition">
               Join Us
