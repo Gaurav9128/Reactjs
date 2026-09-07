@@ -2,10 +2,17 @@ const Register = require("../models/Register");
 const Attendance = require("../models/Attendance");
 const Workshop = require("../models/Workshop");
 
-
+const isAdmin = (req) =>
+  req.user && ["SUPER_ADMIN", "SUB_ADMIN"].includes(req.user.role);
 
 exports.getRecentAttendance = async (req, res) => {
   try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Admin access required",
+      });
+    }
 
     const attendance = await Attendance.find()
       .populate(
@@ -32,6 +39,13 @@ exports.getRecentAttendance = async (req, res) => {
 
 exports.getDashboardStats = async (req, res) => {
   try {
+    if (!isAdmin(req)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: Admin access required",
+      });
+    }
+
     const totalStudents = await Register.countDocuments();
 
     const totalAttendance = await Attendance.countDocuments({
