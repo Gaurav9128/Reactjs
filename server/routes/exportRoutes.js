@@ -7,6 +7,8 @@ const {
   exportDayAttendance,
   exportCompleteWorkshop,
   exportBreakReport,
+  exportTickets,
+  exportStudents,
 } = require("../controllers/exportController");
 
 // Day-wise attendance
@@ -17,6 +19,12 @@ router.get("/attendance/all", exportCompleteWorkshop);
 
 // Break report
 router.get("/break", exportBreakReport);
+
+// Tickets
+router.get("/tickets", exportTickets);
+
+// Students
+router.get("/students", exportStudents);
 
 module.exports = router;
 
