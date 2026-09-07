@@ -11,10 +11,7 @@ require("dotenv").config();
 const app = express();
 
 app.use(helmet());
-app.use(cors({
-  origin: [process.env.CLIENT_URL, process.env.ADMIN_URL].filter(Boolean),
-  credentials: true,
-}));
+app.use(cors());
 app.use(express.json());
 
 app.post("/test", (req, res) => {
@@ -41,6 +38,12 @@ app.use(
   authMiddleware,
   requireAdmin,
   require("./routes/adminDashboardRoutes")
+);
+app.use(
+  "/api/admin/student",
+  authMiddleware,
+  requireAdmin,
+  require("./routes/adminStudentRoutes")
 );
 app.use("/api/break", require("./routes/breakRoutes"));
 app.use("/api/dashboard", require("./routes/dashboardRoutes"));
