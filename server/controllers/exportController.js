@@ -3,6 +3,217 @@ const Attendance = require("../models/Attendance");
 const Workshop = require("../models/Workshop");
 const Register = require("../models/Register");
 
+
+// ==============================
+// BREAK REPORT EXPORT
+// ==============================
+exports.exportBreakReport = async (req, res) => {
+  try {
+    const workshop = await Workshop.findOne({
+      isActive: true,
+    });
+
+    if (!workshop) {
+      return res.status(404).json({
+        success: false,
+        message: "No Active Workshop Found",
+      });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+
+    const worksheet = workbook.addWorksheet("Break Report");
+
+    // Title
+    worksheet.mergeCells("A1:J1");
+
+    worksheet.getCell("A1").value =
+      `${workshop.title || "Workshop"} - Student Break Report`;
+
+    worksheet.getCell("A1").font = {
+      size: 18,
+      bold: true,
+    };
+
+    worksheet.getCell("A1").alignment = {
+      horizontal: "center",
+    };
+
+    worksheet.addRow([]);
+
+    // Columns
+    worksheet.columns = [
+      {
+        header: "Sr No",
+        key: "sr",
+        width: 10,
+      },
+      {
+        header: "Student Name",
+        key: "name",
+        width: 25,
+      },
+      {
+        header: "Email",
+        key: "email",
+        width: 30,
+      },
+      {
+        header: "Mobile",
+        key: "mobile",
+        width: 18,
+      },
+      {
+        header: "College",
+        key: "college",
+        width: 30,
+      },
+      {
+        header: "Branch",
+        key: "branch",
+        width: 18,
+      },
+      {
+        header: "Day",
+        key: "day",
+        width: 10,
+      },
+      {
+        header: "Ticket Number",
+        key: "ticketNumber",
+        width: 22,
+      },
+      {
+        header: "Break Out Time",
+        key: "breakOutTime",
+        width: 25,
+      },
+      {
+        header: "Return Time",
+        key: "returnTime",
+        width: 25,
+      },
+      {
+        header: "Break Status",
+        key: "breakStatus",
+        width: 18,
+      },
+    ];
+
+    /*
+      IMPORTANT:
+
+      This assumes your break information is stored
+      in the Ticket collection because your system
+      already uses:
+
+      breakStatus
+      breakOutTime
+      returnTime
+      studentId
+      dayNumber
+      ticketNumber
+    */
+
+    const Ticket = require("../models/Ticket");
+
+    const tickets = await Ticket.find({
+      $or: [
+        {
+          breakOutTime: {
+            $exists: true,
+            $ne: null,
+          },
+        },
+        {
+          returnTime: {
+            $exists: true,
+            $ne: null,
+          },
+        },
+      ],
+    })
+      .populate(
+        "studentId",
+        "fullName email mobile college branch"
+      )
+      .sort({
+        dayNumber: 1,
+        breakOutTime: 1,
+      });
+
+    tickets.forEach((item, index) => {
+      worksheet.addRow({
+        sr: index + 1,
+
+        name: item.studentId?.fullName || "-",
+
+        email: item.studentId?.email || "-",
+
+        mobile: item.studentId?.mobile || "-",
+
+        college: item.studentId?.college || "-",
+
+        branch: item.studentId?.branch || "-",
+
+        day: item.dayNumber || "-",
+
+        ticketNumber: item.ticketNumber || "-",
+
+        breakOutTime: item.breakOutTime
+          ? new Date(item.breakOutTime).toLocaleString("en-IN")
+          : "-",
+
+        returnTime: item.returnTime
+          ? new Date(item.returnTime).toLocaleString("en-IN")
+          : "-",
+
+        breakStatus: item.breakStatus || "-",
+      });
+    });
+
+    // Total break records
+    worksheet.addRow([]);
+
+    worksheet.addRow({
+      name: "Total Break Records",
+      status: tickets.length,
+    });
+
+    // Header formatting
+    worksheet.getRow(3).font = {
+      bold: true,
+    };
+
+    worksheet.getRow(3).alignment = {
+      horizontal: "center",
+    };
+
+    // Response headers
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Workshop_Break_Report.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+
+    res.end();
+
+  } catch (err) {
+    console.error("Break Export Error:", err);
+
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 // ==============================
 // DAY WISE ATTENDANCE EXPORT
 // ==============================
