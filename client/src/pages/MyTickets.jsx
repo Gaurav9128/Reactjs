@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import TicketViewer from "../components/studentTickets/TicketViewer.jsx";
 
 const MyTickets = () => {
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     loadTickets();
@@ -27,6 +29,39 @@ const MyTickets = () => {
 
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      setSendingEmail(true);
+
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/tickets/email/send`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "Tickets Sent",
+        text: res.data.message,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Send",
+        text: err.response?.data?.message || "Something went wrong",
+      });
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -108,6 +143,23 @@ const MyTickets = () => {
       <h1 className="text-4xl font-bold mb-8">
         🎟 My Tickets
       </h1>
+
+      <div className="flex justify-end mb-6">
+        <button
+          onClick={handleSendEmail}
+          disabled={sendingEmail}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-xl transition flex items-center gap-2"
+        >
+          {sendingEmail ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Sending...
+            </>
+          ) : (
+            "📧 Send Tickets to Email"
+          )}
+        </button>
+      </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
