@@ -2,6 +2,7 @@ const Ticket = require("../models/Ticket");
 const jwt = require("jsonwebtoken");
 const Attendance = require("../models/Attendance");
 const Register = require("../models/Register");
+const TicketRequest = require("../models/TicketRequest");
 const sendTicketsEmail = require("../utils/sendTicketsEmail");
 
 // ==========================================
@@ -307,6 +308,330 @@ exports.adminBulkSendTicketsEmail = async (req, res) => {
       sent,
       failed,
       errors,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+// ==========================================
+// Admin: Resolve Break Timeout
+// ==========================================
+
+exports.resolveBreakTimeout = async (req, res) => {
+  try {
+
+    const { ticketNumber, action } = req.body;
+
+    if (!ticketNumber || !action) {
+      return res.status(400).json({
+        success: false,
+        message: "Ticket Number and Action are required",
+      });
+    }
+
+    if (!["ALLOW", "CANCEL"].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: "Action must be ALLOW or CANCEL",
+      });
+    }
+
+    const ticket = await Ticket.findOne({ ticketNumber });
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket Not Found",
+      });
+    }
+
+    if (ticket.breakStatus !== "TIMEOUT") {
+      return res.status(400).json({
+        success: false,
+        message: "Ticket is not in timeout state",
+      });
+    }
+
+    if (action === "ALLOW") {
+      // Re-enable remaining future tickets
+      await Ticket.updateMany(
+        {
+          studentId: ticket.studentId,
+          dayNumber: { $gt: ticket.dayNumber },
+          isCancelled: true,
+        },
+        {
+          $set: {
+            status: "UPCOMING",
+            isCancelled: false,
+          },
+        }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Remaining tickets re-enabled",
+      });
+    }
+
+    // CANCEL: keep remaining tickets cancelled (already done)
+    return res.status(200).json({
+      success: true,
+      message: "Remaining tickets remain cancelled",
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+// ==========================================
+// Student: Request Re-enable Cancelled Ticket
+// ==========================================
+
+exports.requestReEnable = async (req, res) => {
+  try {
+
+    const { ticketId, reason } = req.body;
+
+    if (!ticketId) {
+      return res.status(400).json({
+        success: false,
+        message: "Ticket ID is required",
+      });
+    }
+
+    const ticket = await Ticket.findById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket Not Found",
+      });
+    }
+
+    if (ticket.studentId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Access Denied",
+      });
+    }
+
+    if (!ticket.isCancelled) {
+      return res.status(400).json({
+        success: false,
+        message: "Ticket is not cancelled",
+      });
+    }
+
+    // Check for existing pending request
+    const existing = await TicketRequest.findOne({
+      ticketId,
+      studentId: req.user.id,
+      status: "PENDING",
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "You already have a pending request for this ticket",
+      });
+    }
+
+    const request = await TicketRequest.create({
+      ticketId,
+      studentId: req.user.id,
+      reason: reason || "",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Re-enable request submitted",
+      request,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+// ==========================================
+// Admin: List All Ticket Re-enable Requests
+// ==========================================
+
+exports.getTicketRequests = async (req, res) => {
+  try {
+
+    const requests = await TicketRequest.find()
+      .populate("ticketId")
+      .populate("studentId", "fullName email college")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      requests,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+// ==========================================
+// Admin: Approve Re-enable Request
+// ==========================================
+
+exports.approveTicketRequest = async (req, res) => {
+  try {
+
+    const { requestId } = req.body;
+
+    if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: "Request ID is required",
+      });
+    }
+
+    const request = await TicketRequest.findById(requestId);
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: "Request Not Found",
+      });
+    }
+
+    if (request.status !== "PENDING") {
+      return res.status(400).json({
+        success: false,
+        message: "Request already processed",
+      });
+    }
+
+    request.status = "APPROVED";
+    request.approvedBy = req.user.id;
+    request.approvedAt = new Date();
+
+    await request.save();
+
+    // Fetch the ticket to get its dayNumber and workshopDate
+    const ticket = await Ticket.findById(request.ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket Not Found",
+      });
+    }
+
+    // Determine the correct status based on the ticket's workshop date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const ticketDate = new Date(ticket.workshopDate);
+    ticketDate.setHours(0, 0, 0, 0);
+    const isSameDay = ticketDate.getTime() === today.getTime();
+
+    // Re-enable the cancelled ticket and all future tickets for this student
+    // If the ticket is for today, set status to ENABLED (can be scanned)
+    // If the ticket is for a future day, set status to UPCOMING (locked until that day)
+    const newStatus = isSameDay ? "ENABLED" : "UPCOMING";
+
+    await Ticket.updateMany(
+      {
+        studentId: request.studentId,
+        dayNumber: { $gte: ticket.dayNumber },
+        isCancelled: true,
+      },
+      {
+        $set: {
+          status: newStatus,
+          isCancelled: false,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Request approved and ticket re-enabled",
+      request,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+// ==========================================
+// Admin: Reject Re-enable Request
+// ==========================================
+
+exports.rejectTicketRequest = async (req, res) => {
+  try {
+
+    const { requestId, adminNote } = req.body;
+
+    if (!requestId) {
+      return res.status(400).json({
+        success: false,
+        message: "Request ID is required",
+      });
+    }
+
+    const request = await TicketRequest.findById(requestId);
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: "Request Not Found",
+      });
+    }
+
+    if (request.status !== "PENDING") {
+      return res.status(400).json({
+        success: false,
+        message: "Request already processed",
+      });
+    }
+
+    request.status = "REJECTED";
+    request.adminNote = adminNote || "";
+    request.approvedBy = req.user.id;
+    request.approvedAt = new Date();
+
+    await request.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Request rejected",
+      request,
     });
 
   } catch (err) {

@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   X,
+  Ticket,
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
@@ -50,6 +51,11 @@ const Sidebar = () => {
       name: "Reports",
       icon: <FileSpreadsheet size={20} />,
       path: "/admin/reports",
+    },
+    {
+      name: "Ticket Requests",
+      icon: <Ticket size={20} />,
+      path: "/admin/ticket-requests",
     },
   ];
 

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
 import adminApi from "../utils/adminApi";
+import Swal from "sweetalert2";
 
 const AdminStudentDetails = () => {
   const { studentId } = useParams();
@@ -121,53 +122,53 @@ const AdminStudentDetails = () => {
                     Status
                   </th>
 
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Attendance
-                  </th>
-                </tr>
-              </thead>
+<th className="px-4 py-3 text-left whitespace-nowrap">
+                     Attendance
+                   </th>
+                 </tr>
+               </thead>
 
-              <tbody>
-                {tickets.map((ticket) => (
-                  <tr
-                    key={ticket._id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      Day {ticket.dayNumber}
-                    </td>
+               <tbody>
+                 {tickets.map((ticket) => (
+                   <tr
+                     key={ticket._id}
+                     className="border-b hover:bg-gray-50 transition"
+                   >
+                     <td className="px-4 py-3 whitespace-nowrap">
+                       Day {ticket.dayNumber}
+                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {ticket.ticketNumber}
-                    </td>
+                     <td className="px-4 py-3 whitespace-nowrap">
+                       {ticket.ticketNumber}
+                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {ticket.seatNumber}
-                    </td>
+                     <td className="px-4 py-3 whitespace-nowrap">
+                       {ticket.seatNumber}
+                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          ticket.status === "ENABLED"
-                            ? "bg-green-100 text-green-700"
-                            : ticket.status === "COMPLETED"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {ticket.status}
-                      </span>
-                    </td>
+                     <td className="px-4 py-3 whitespace-nowrap">
+                       <span
+                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                           ticket.status === "ENABLED"
+                             ? "bg-green-100 text-green-700"
+                             : ticket.status === "COMPLETED"
+                             ? "bg-blue-100 text-blue-700"
+                             : "bg-yellow-100 text-yellow-700"
+                         }`}
+                       >
+                         {ticket.status}
+                       </span>
+                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {ticket.attendance ? "Present" : "Absent"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                     <td className="px-4 py-3 whitespace-nowrap">
+                       {ticket.attendance ? "Present" : "Absent"}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+           </div>
+         </div>
                         {/* Attendance History */}
 
         <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-8">

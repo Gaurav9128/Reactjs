@@ -31,6 +31,7 @@ import AdminBreakReport from "./pages/AdminBreakReport";
 import AdminTicketReport from "./pages/AdminTicketReport";
 import MyTickets from "./pages/MyTickets";
 import AdminAttendanceScanner from "./pages/AdminAttendanceScanner";
+import AdminTicketRequests from "./pages/AdminTicketRequests";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -124,13 +125,18 @@ function AppContent() {
           <AdminRoute>
             <AdminTicketReport />
           </AdminRoute>
-        }/>
+}/>
          <Route path="/admin/attendance-scanner" element={
           <AdminRoute>
             <AdminAttendanceScanner />
           </AdminRoute>
         }/>
-      </Routes>
+         <Route path="/admin/ticket-requests" element={
+          <AdminRoute>
+            <AdminTicketRequests />
+          </AdminRoute>
+        }/>
+       </Routes>
 
       {!isAdminPage && <Footer />}
     </>

@@ -8,6 +8,53 @@ const MyTickets = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [sendingEmail, setSendingEmail] = useState(false);
 
+  const handleRequestReEnable = async (ticketId) => {
+    const result = await Swal.fire({
+      title: "Request Re-enable",
+      text: "Submit a request to re-enable this cancelled ticket?",
+      input: "textarea",
+      inputLabel: "Optional note",
+      inputPlaceholder: "Add a note for the admin (optional)",
+      showDenyButton: true,
+      confirmButtonText: "Submit Request",
+      denyButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/tickets/request-re-enable`,
+          {
+            ticketId,
+            reason: result.value || "",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.data.success) {
+          Swal.fire({
+            icon: "success",
+            title: "Request Submitted",
+            text: res.data.message,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        }
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: err.response?.data?.message || "Something went wrong",
+        });
+      }
+    }
+  };
+
   useEffect(() => {
     loadTickets();
   }, []);
@@ -214,6 +261,15 @@ const MyTickets = () => {
                 ? "🎫 View Ticket"
                 : "Not Available"}
             </button>
+
+            {ticket.isCancelled && (
+              <button
+                onClick={() => handleRequestReEnable(ticket._id)}
+                className="mt-3 w-full py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold transition"
+              >
+                Request Re-enable
+              </button>
+            )}
 
           </div>
 

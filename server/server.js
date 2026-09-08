@@ -6,7 +6,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const adminStudentRoutes = require("./routes/adminStudentRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const { requireRole, requireAdmin } = require("./middleware/roleMiddleware");
-const { adminBulkSendTicketsEmail } = require("./controllers/ticketController");
+const { adminBulkSendTicketsEmail, resolveBreakTimeout, getTicketRequests, approveTicketRequest, rejectTicketRequest } = require("./controllers/ticketController");
 require("dotenv").config();
 
 const app = express();
@@ -69,6 +69,34 @@ app.post(
   authMiddleware,
   requireAdmin,
   adminBulkSendTicketsEmail
+);
+
+app.post(
+  "/api/admin/tickets/return-timeout",
+  authMiddleware,
+  requireAdmin,
+  resolveBreakTimeout
+);
+
+app.get(
+  "/api/admin/ticket-requests",
+  authMiddleware,
+  requireAdmin,
+  getTicketRequests
+);
+
+app.post(
+  "/api/admin/tickets/approve-request",
+  authMiddleware,
+  requireAdmin,
+  approveTicketRequest
+);
+
+app.post(
+  "/api/admin/tickets/reject-request",
+  authMiddleware,
+  requireAdmin,
+  rejectTicketRequest
 );
 
 
