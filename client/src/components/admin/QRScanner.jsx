@@ -7,6 +7,31 @@ const QRScanner = ({ setResult, scanType }) => {
   const scannerRef = useRef(null);
   const isScanning = useRef(false);
 
+  const handleTimeoutAction = async (ticketNumber, action) => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/admin/tickets/return-timeout`,
+        { ticketNumber, action }
+      );
+
+      if (res.data.success) {
+        Swal.fire({
+          icon: "success",
+          title: action === "ALLOW" ? "Tickets Re-enabled" : "Tickets Cancelled",
+          text: res.data.message,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Action Failed",
+        text: err.response?.data?.message || "Something went wrong",
+      });
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -88,13 +113,31 @@ const QRScanner = ({ setResult, scanType }) => {
                 data: res.data.ticket,
               });
 
-              Swal.fire({
-                icon: "success",
-                title: res.data.action || "Success",
-                text: res.data.message,
-                timer: 1200,
-                showConfirmButton: false,
-              });
+              if (res.data.action === "TIMEOUT" && scanType === "RETURN") {
+                const result = await Swal.fire({
+                  icon: "warning",
+                  title: "Break Timed Out",
+                  text: `Student was out for ${res.data.totalMinutes} minutes. Allow return?`,
+                  showDenyButton: true,
+                  confirmButtonText: "✅ Allow",
+                  denyButtonText: "❌ Cancel",
+                  focusDeny: false,
+                });
+
+                if (result.isConfirmed) {
+                  await handleTimeoutAction(ticketNumber, "ALLOW");
+                } else {
+                  await handleTimeoutAction(ticketNumber, "CANCEL");
+                }
+              } else {
+                Swal.fire({
+                  icon: "success",
+                  title: res.data.action || "Success",
+                  text: res.data.message,
+                  timer: 1200,
+                  showConfirmButton: false,
+                });
+              }
 
             } catch (err) {
 

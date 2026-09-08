@@ -275,32 +275,19 @@ exports.scanAttendance = async (req, res) => {
       ticket.breakStatus = "TIMEOUT";
 
       // Ticket itself is still enabled for today's
-      // workshop, but future tickets are cancelled.
+      // workshop, but future tickets are NOT cancelled.
+      // Admin will be prompted to allow or cancel.
       ticket.status = "ENABLED";
 
       await breakLog.save();
       await ticket.save();
 
-      // Cancel remaining future tickets
-      await Ticket.updateMany(
-        {
-          studentId: ticket.studentId._id,
-          dayNumber: { $gt: ticket.dayNumber },
-          isCancelled: false,
-        },
-        {
-          $set: {
-            status: "CANCELLED",
-            isCancelled: true,
-          },
-        }
-      );
-
       return res.json({
         success: true,
         action: "TIMEOUT",
-        message: "Late Return. Remaining Tickets Cancelled.",
+        message: "Late Return. Admin action required.",
         ticket,
+        totalMinutes: minutes,
       });
     }
 
