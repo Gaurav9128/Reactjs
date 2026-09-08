@@ -16,7 +16,7 @@ import Organizers from "./components/Organizers";
 import CommunitySection from "./components/CommunitySection";
 import Footer from "./components/Footer";
 import WorkshopSchedule from "./components/WorkshopSchedule";
-// import RegisterForm from "./components/RegisterForm";
+import RegisterForm from "./components/RegisterForm";
 import Dashboard from "./components/Dashboard";
 import Login from "./components/Login";
 import AdminStudents from "./pages/AdminStudents";
@@ -68,7 +68,7 @@ function AppContent() {
         <Route path="/community" element={<CommunitySection />} />
         <Route path="/what-to-expect" element={<WhatToExpect />} />
         <Route path="/workshop-schedule" element={<WorkshopSchedule />} />
-        {/* <Route path="/register" element={<RegisterForm />} /> */}
+        <Route path="/register" element={<RegisterForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
