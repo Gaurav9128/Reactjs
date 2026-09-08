@@ -149,7 +149,12 @@ const BoardingPass = ({ ticket }) => {
           <div className="flex flex-col items-center justify-center border-l">
 
             <QRCode
-              value={ticket.ticketNumber}
+              value={JSON.stringify({
+                ticketNumber: ticket.ticketNumber,
+                studentId: ticket.studentId,
+                workshopId: ticket.workshopId,
+                day: ticket.dayNumber,
+              })}
               size={170}
             />
 

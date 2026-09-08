@@ -1,6 +1,8 @@
 const Ticket = require("../models/Ticket");
 const jwt = require("jsonwebtoken");
 const Attendance = require("../models/Attendance");
+const Register = require("../models/Register");
+const sendTicketsEmail = require("../utils/sendTicketsEmail");
 
 // ==========================================
 // Get Recent Attendance Scans
@@ -204,4 +206,115 @@ exports.scanAttendance = async (req, res) => {
 
   }
 
+};
+
+// ==========================================
+// Send Tickets Email - Helper
+// ==========================================
+
+const sendTicketsEmailForStudent = async (studentId) => {
+  const student = await Register.findById(studentId);
+
+  if (!student) {
+    throw new Error("Student not found");
+  }
+
+  const tickets = await Ticket.find({ studentId }).sort({ dayNumber: 1 }).populate("studentId");
+
+  if (!tickets.length) {
+    throw new Error("No tickets found for this student");
+  }
+
+  await sendTicketsEmail(student, tickets);
+};
+
+// ==========================================
+// Student Self-Serve: Send My Tickets Email
+// ==========================================
+
+exports.sendMyTicketsEmail = async (req, res) => {
+  try {
+
+    await sendTicketsEmailForStudent(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Tickets sent to your email successfully",
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
+};
+
+// ==========================================
+// Admin: Send Tickets Email to All Students
+// ==========================================
+
+exports.adminBulkSendTicketsEmail = async (req, res) => {
+  try {
+
+    const students = await Register.find({});
+
+    if (!students.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No students found",
+        sent: 0,
+        failed: 0,
+        errors: [],
+      });
+    }
+
+    let sent = 0;
+    let failed = 0;
+    const errors = [];
+
+    for (const student of students) {
+      try {
+
+        const tickets = await Ticket.find({ studentId: student._id })
+          .sort({ dayNumber: 1 })
+          .populate("studentId");
+
+        if (!tickets.length) {
+          continue;
+        }
+
+        await sendTicketsEmail(student, tickets);
+        sent++;
+
+      } catch (err) {
+
+        failed++;
+        errors.push({
+          studentId: student._id,
+          email: student.email,
+          error: err.message,
+        });
+
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Bulk ticket email completed. Sent: ${sent}, Failed: ${failed}`,
+      sent,
+      failed,
+      errors,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+
+  }
 };

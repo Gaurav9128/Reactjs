@@ -64,7 +64,12 @@ const TechCard = ({ ticket }) => {
           <div className="flex justify-center items-center border-l border-cyan-500">
 
             <QRCode
-              value={ticket.ticketNumber}
+              value={JSON.stringify({
+                ticketNumber: ticket.ticketNumber,
+                studentId: ticket.studentId,
+                workshopId: ticket.workshopId,
+                day: ticket.dayNumber,
+              })}
               size={170}
               bgColor="#111827"
               fgColor="#06b6d4"

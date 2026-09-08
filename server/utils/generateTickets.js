@@ -1,6 +1,7 @@
 const Ticket = require("../models/Ticket");
 const Workshop = require("../models/Workshop");
 const QRCode = require("qrcode");
+const sendTicketsEmail = require("./sendTicketsEmail");
 
 const designs = [
   "BOARDING_PASS",
@@ -63,6 +64,17 @@ const generateTickets = async (student) => {
 
     });
 
+  }
+
+  const createdTickets = await Ticket.find({
+    studentId: student._id,
+    workshopId: workshop._id,
+  }).populate("studentId");
+
+  try {
+    await sendTicketsEmail(student, createdTickets);
+  } catch (err) {
+    console.log("Ticket email failed:", err.message);
   }
 
 };

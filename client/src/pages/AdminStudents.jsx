@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import adminApi from "../utils/adminApi";
 
 const AdminStudents = () => {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
+  const [sendingAll, setSendingAll] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +28,43 @@ const AdminStudents = () => {
     }
   };
 
+  const handleBulkSendTickets = async () => {
+    try {
+      setSendingAll(true);
+
+      const res = await adminApi.post(
+        "/api/admin/tickets/email/send-all"
+      );
+
+      const { sent, failed, errors } = res.data;
+
+      let message = `Ticket emails sent successfully!\n\nSent: ${sent}`;
+      if (failed > 0) {
+        message += `\nFailed: ${failed}`;
+        if (errors.length > 0) {
+          message += "\n\nFailed emails:\n";
+          errors.forEach((err) => {
+            message += `- ${err.email}: ${err.error}\n`;
+          });
+        }
+      }
+
+      Swal.fire({
+        icon: failed > 0 ? "warning" : "success",
+        title: "Bulk Ticket Email",
+        text: message,
+      });
+
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: err.response?.data?.message || "Failed to send tickets",
+      });
+    } finally {
+      setSendingAll(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
       <Sidebar />
@@ -33,14 +72,31 @@ const AdminStudents = () => {
       <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
         {/* Heading */}
 
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            Student Management
-          </h1>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Student Management
+            </h1>
 
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">
-            Search and manage workshop students
-          </p>
+            <p className="text-gray-500 mt-1 text-sm sm:text-base">
+              Search and manage workshop students
+            </p>
+          </div>
+
+          <button
+            onClick={handleBulkSendTickets}
+            disabled={sendingAll}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
+          >
+            {sendingAll ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Sending...
+              </>
+            ) : (
+              "📧 Send All Tickets"
+            )}
+          </button>
         </div>
 
         {/* Search */}

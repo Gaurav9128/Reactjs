@@ -6,6 +6,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const adminStudentRoutes = require("./routes/adminStudentRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const { requireRole, requireAdmin } = require("./middleware/roleMiddleware");
+const { adminBulkSendTicketsEmail } = require("./controllers/ticketController");
 require("dotenv").config();
 
 const app = express();
@@ -62,6 +63,13 @@ app.use(
   require("./routes/adminAttendanceRoutes")
 );
 app.use("/api/recent-scans", require("./routes/recentScanRoutes"));
+
+app.post(
+  "/api/admin/tickets/email/send-all",
+  authMiddleware,
+  requireAdmin,
+  adminBulkSendTicketsEmail
+);
 
 
 const PORT = 5000;
