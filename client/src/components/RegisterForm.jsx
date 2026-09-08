@@ -309,7 +309,7 @@ const RegisterForm = () => {
                                         <option value="1st Semester">1st Semester</option>
                                         <option value="3rd Semester">3rd Semester</option>
                                         <option value="5th Semester">5th Semester</option>
-                                        <option value="5th Semester">7th Semester</option>
+                                        <option value="7th Semester">7th Semester</option>
 
                                     </select>
                                 </div>
