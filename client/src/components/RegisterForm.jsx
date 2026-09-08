@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const RegisterForm = () => {
 
-     const navigate = useNavigate();
+    const navigate = useNavigate();
     const [fullName, setFullName] = useState("");
     const [mobile, setMobile] = useState("");
     const [college, setCollege] = useState("");
@@ -87,7 +87,7 @@ const RegisterForm = () => {
             setLoading(true);
 
             const response = await axios.post(
-               `${import.meta.env.VITE_API_URL}/api/register`,
+                `${import.meta.env.VITE_API_URL}/api/register`,
                 {
                     fullName,
                     mobile,
@@ -309,6 +309,8 @@ const RegisterForm = () => {
                                         <option value="1st Semester">1st Semester</option>
                                         <option value="3rd Semester">3rd Semester</option>
                                         <option value="5th Semester">5th Semester</option>
+                                        <option value="5th Semester">7th Semester</option>
+
                                     </select>
                                 </div>
 
