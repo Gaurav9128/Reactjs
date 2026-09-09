@@ -4,6 +4,7 @@ const Register = require("../models/Register");
 const Attendance = require("../models/Attendance");
 const Ticket = require("../models/Ticket");
 const BreakLog = require("../models/BreakLog");
+const Workshop = require("../models/Workshop");
 
 // ======================================================
 // Student Dashboard
@@ -85,30 +86,42 @@ exports.getStudentDashboard = async (req, res) => {
 exports.getLiveStats = async (req, res) => {
   try {
 
+    const workshop = await Workshop.findOne({ isActive: true });
+
+    const workshopFilter = workshop
+      ? { workshopId: workshop._id }
+      : {};
+
     const present = await Attendance.countDocuments({
+      ...workshopFilter,
       status: "PRESENT",
     });
 
     const inside = await Ticket.countDocuments({
-  attendance: true,
-  breakStatus: {
-    $in: ["INSIDE", "RETURNED"],
-  },
-});
+      ...workshopFilter,
+      attendance: true,
+      breakStatus: {
+        $in: ["INSIDE", "RETURNED"],
+      },
+    });
 
     const onBreak = await Ticket.countDocuments({
+      ...workshopFilter,
       breakStatus: "BREAK_OUT",
     });
 
     const returned = await BreakLog.countDocuments({
+      ...workshopFilter,
       status: "RETURNED",
     });
 
     const timeout = await BreakLog.countDocuments({
+      ...workshopFilter,
       status: "TIMEOUT",
     });
 
     const cancelled = await Ticket.countDocuments({
+      ...workshopFilter,
       isCancelled: true,
     });
 

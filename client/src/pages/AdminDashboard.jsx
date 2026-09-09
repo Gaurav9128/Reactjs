@@ -5,6 +5,7 @@ import adminApi from "../utils/adminApi";
 
 import Sidebar from "../components/admin/Sidebar";
 import DashboardCard from "../components/admin/DashboardCard";
+import DayWiseAttendance from "../components/admin/DayWiseAttendance";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -15,10 +16,12 @@ const AdminDashboard = () => {
   });
 
   const [recentAttendance, setRecentAttendance] = useState([]);
+  const [dayWise, setDayWise] = useState([]);
 
   useEffect(() => {
     loadDashboard();
     loadRecentAttendance();
+    loadDayWise();
   }, []);
 
   // ===========================
@@ -54,6 +57,22 @@ const AdminDashboard = () => {
   };
 
   // ===========================
+  // Day-Wise Attendance
+  // ===========================
+
+  const loadDayWise = async () => {
+    try {
+      const res = await adminApi.get(
+        `/api/admin/dashboard/day-wise`
+      );
+
+      setDayWise(res.data.days || []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ===========================
   // End Workshop Day
   // ===========================
 
@@ -83,6 +102,7 @@ const AdminDashboard = () => {
 
       loadDashboard();
       loadRecentAttendance();
+      loadDayWise();
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -139,6 +159,10 @@ const AdminDashboard = () => {
             value="Ready"
           />
         </div>
+
+        {/* Day-wise Attendance */}
+
+        <DayWiseAttendance days={dayWise} />
 
         {/* Recent Attendance */}
 
