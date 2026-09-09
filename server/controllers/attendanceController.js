@@ -364,12 +364,75 @@ exports.endDay = async (req, res) => {
 
     let completed = 0;
     let enabled = 0;
+    let absentCount = 0;
 
     // ==========================================
     // COMPLETE TODAY'S TICKETS
     // ==========================================
 
     for (const ticket of tickets) {
+
+      // ==========================================
+      // ABSENT CHECK
+      // ==========================================
+      //
+      // If the student never scanned ENTRY today,
+      // they are marked ABSENT.
+      //
+      // Today's ticket + all future tickets are
+      // cancelled. An ABSENT attendance record is
+      // created for audit / reporting.
+      //
+      // This coexists with the break-timeout rule.
+      // Already-cancelled tickets are excluded by
+      // the query above, so they are never touched.
+      //
+      // ==========================================
+
+      if (!ticket.attendance) {
+
+        // Record ABSENT attendance for today
+        await Attendance.create({
+          studentId: ticket.studentId,
+          ticketId: ticket._id,
+          workshopId: ticket.workshopId,
+          workshopDate: ticket.workshopDate,
+          dayNumber: ticket.dayNumber,
+          status: "ABSENT",
+          attendanceTime: new Date(),
+          scanBy: null,
+        });
+
+        // Cancel today's ticket
+        ticket.status = "CANCELLED";
+        ticket.isCancelled = true;
+        await ticket.save();
+
+        absentCount++;
+
+        // Cancel all future tickets for this student
+        // (skip already-cancelled ones)
+        await Ticket.updateMany(
+          {
+            studentId: ticket.studentId,
+            dayNumber: { $gt: ticket.dayNumber },
+            isCancelled: false,
+          },
+          {
+            $set: {
+              status: "CANCELLED",
+              isCancelled: true,
+            },
+          }
+        );
+
+        continue;
+      }
+
+      // ==========================================
+      // PRESENT
+      // ==========================================
+
       ticket.status = "COMPLETED";
 
       await ticket.save();
@@ -398,9 +461,10 @@ exports.endDay = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Day Completed Successfully.",
+      message: `Day Completed Successfully. Present: ${completed}, Absent (future tickets cancelled): ${absentCount}`,
       completedTickets: completed,
       enabledTickets: enabled,
+      absentTickets: absentCount,
     });
 
   } catch (err) {
