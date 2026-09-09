@@ -98,7 +98,7 @@ const HeroSection = () => {
           </div>
 
           {/* Buttons */}
-          <div  onClick={() => navigate("/")} className="mt-8 flex flex-wrap gap-4 justify-center pb-2">
+          {/* <div  onClick={() => navigate("/")} className="mt-8 flex flex-wrap gap-4 justify-center pb-2">
             <button className="px-6 md:px-8 py-3 rounded-full bg-white text-black font-semibold hover:scale-105 transition transform">
               Register Now
             </button>
@@ -106,7 +106,7 @@ const HeroSection = () => {
             <button className="px-6 md:px-8 py-3 rounded-full border border-white/40 text-white hover:bg-white hover:text-black transition">
               Join Us
             </button>
-          </div>
+          </div> */}
 
         </div>
       </div>
