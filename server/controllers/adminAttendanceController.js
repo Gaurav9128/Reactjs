@@ -6,6 +6,8 @@ exports.getAttendance = async (req, res) => {
 
     let filter = {};
 
+    filter.status = "PRESENT";
+
     if (day) {
       filter.dayNumber = Number(day);
     }

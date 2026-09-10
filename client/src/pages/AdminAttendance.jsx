@@ -117,7 +117,7 @@ const AdminAttendance = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-gray-500 text-sm uppercase tracking-wide">
-              Total Attendance
+              Total Present
             </h2>
 
             <p className="text-3xl sm:text-4xl font-bold mt-2">
