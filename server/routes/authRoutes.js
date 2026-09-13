@@ -4,7 +4,9 @@ const router = express.Router();
 const Register = require("../models/Register");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { requestPasswordReset, resetPasswordWithOtp } = require("../controllers/authController");
+const { requestPasswordReset, resetPasswordWithOtp, getProfile, updateProfile } = require("../controllers/authController");
+const authMiddleware = require("../middleware/authMiddleware");
+const { upload, uploadErrorHandler } = require("../middleware/upload");
 
 router.post("/login", async (req, res) => {
   try {
@@ -66,6 +68,19 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
+router.get("/profile", authMiddleware, getProfile);
+
+router.put(
+  "/profile",
+  authMiddleware,
+  upload.fields([
+    { name: "profilePicture", maxCount: 1 },
+    { name: "signature", maxCount: 1 },
+  ]),
+  uploadErrorHandler,
+  updateProfile
+);
 
 router.post("/forgot-password", requestPasswordReset);
 

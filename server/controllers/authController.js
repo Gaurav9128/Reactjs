@@ -4,6 +4,8 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
+const uploadToCloudinary = require("../utils/uploadToCloudinary");
+const cloudinary = require("../utils/cloudinary");
 
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
@@ -158,6 +160,209 @@ exports.resetPasswordWithOtp = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await Register.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+const deleteCloudinaryAsset = async (url) => {
+  if (!url || typeof url !== "string") {
+    return;
+  }
+
+  try {
+    const regex = /\/upload\/(?:v\d+\/)?([^#?]+)/;
+    const match = url.match(regex);
+
+    if (!match) {
+      return;
+    }
+
+    const publicId = match[1].replace(/\.[^/.]+$/, "");
+
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.log("DELETE CLOUDINARY ASSET ERROR:", err);
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { mobile, college, branch, year } = req.body;
+    const profilePictureFile = req.files?.profilePicture?.[0];
+    const signatureFile = req.files?.signature?.[0];
+
+    if (
+      typeof mobile === "undefined" &&
+      typeof college === "undefined" &&
+      typeof branch === "undefined" &&
+      typeof year === "undefined" &&
+      !profilePictureFile &&
+      !signatureFile
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "No changes provided",
+      });
+    }
+
+    const update = {};
+
+    if (typeof mobile !== "undefined") {
+      const trimmedMobile = String(mobile || "").trim();
+
+      if (!trimmedMobile) {
+        return res.status(400).json({
+          success: false,
+          message: "Mobile number is required",
+        });
+      }
+
+      update.mobile = trimmedMobile;
+    }
+
+    if (typeof college !== "undefined") {
+      const trimmedCollege = String(college || "").trim();
+
+      if (!trimmedCollege) {
+        return res.status(400).json({
+          success: false,
+          message: "College is required",
+        });
+      }
+
+      update.college = trimmedCollege;
+    }
+
+    if (typeof branch !== "undefined") {
+      const trimmedBranch = String(branch || "").trim();
+
+      if (!trimmedBranch) {
+        return res.status(400).json({
+          success: false,
+          message: "Branch is required",
+        });
+      }
+
+      update.branch = trimmedBranch;
+    }
+
+    if (typeof year !== "undefined") {
+      const yearValue = String(year || "").trim();
+
+      if (!yearValue) {
+        return res.status(400).json({
+          success: false,
+          message: "Year is required",
+        });
+      }
+
+      const numericYear = Number(yearValue);
+
+      if (Number.isNaN(numericYear) || numericYear < 1 || numericYear > 7) {
+        return res.status(400).json({
+          success: false,
+          message: "Year must be a number between 1 and 7",
+        });
+      }
+
+      update.year = numericYear;
+    }
+
+    const existingUser = await Register.findById(req.user.id).select(
+      "profilePicture signature"
+    );
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const uploadedAssets = [];
+
+    try {
+      if (profilePictureFile) {
+        update.profilePicture = await uploadToCloudinary(
+          profilePictureFile.buffer,
+          "profile_pictures"
+        );
+        uploadedAssets.push(update.profilePicture);
+      }
+
+      if (signatureFile) {
+        update.signature = await uploadToCloudinary(
+          signatureFile.buffer,
+          "signatures"
+        );
+        uploadedAssets.push(update.signature);
+      }
+    } catch (uploadErr) {
+      for (const assetUrl of uploadedAssets) {
+        await deleteCloudinaryAsset(assetUrl);
+      }
+
+      throw uploadErr;
+    }
+
+    const user = await Register.findByIdAndUpdate(
+      req.user.id,
+      { $set: update },
+      { returnDocument: 'after' }
+    ).select("-password");
+
+    if (!user) {
+      for (const assetUrl of uploadedAssets) {
+        await deleteCloudinaryAsset(assetUrl);
+      }
+
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (profilePictureFile && existingUser.profilePicture) {
+      await deleteCloudinaryAsset(existingUser.profilePicture);
+    }
+
+    if (signatureFile && existingUser.signature) {
+      await deleteCloudinaryAsset(existingUser.signature);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (err) {
+    console.log("UPDATE PROFILE ERROR:", err);
     res.status(500).json({
       success: false,
       message: err.message,
