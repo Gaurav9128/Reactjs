@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 
 const AdminTicketRequests = () => {
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadRequests();
@@ -12,10 +13,13 @@ const AdminTicketRequests = () => {
 
   const loadRequests = async () => {
     try {
+      setLoading(true);
       const res = await adminApi.get("/api/admin/ticket-requests");
       setRequests(res.data.requests);
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -147,7 +151,13 @@ const AdminTicketRequests = () => {
               </thead>
 
               <tbody>
-                {requests.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-10 text-gray-500">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : requests.length > 0 ? (
                   requests.map((req) => (
                     <tr
                       key={req._id}

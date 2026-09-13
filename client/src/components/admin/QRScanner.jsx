@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import axios from "axios";
 import Swal from "sweetalert2";
+import adminApi from "../../utils/adminApi";
 
 const QRScanner = ({ setResult, scanType }) => {
   const scannerRef = useRef(null);
@@ -9,8 +9,8 @@ const QRScanner = ({ setResult, scanType }) => {
 
   const handleTimeoutAction = async (ticketNumber, action) => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/admin/tickets/return-timeout`,
+      const res = await adminApi.post(
+        "/api/admin/tickets/return-timeout",
         { ticketNumber, action }
       );
 
@@ -84,7 +84,7 @@ const QRScanner = ({ setResult, scanType }) => {
 
           async (decodedText) => {
             if (isScanning.current) return;
-
+            
             isScanning.current = true;
 
             try {
@@ -93,14 +93,15 @@ const QRScanner = ({ setResult, scanType }) => {
               // Support JSON QR
               try {
                 const qr = JSON.parse(decodedText);
-
                 if (qr.ticketNumber) {
                   ticketNumber = qr.ticketNumber;
                 }
-              } catch {}
+              } catch {
+                // ignore plain ticket-number QR codes
+              }
 
-              const res = await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/attendance/scan`,
+              const res = await adminApi.post(
+                "/api/attendance/scan",
                 {
                   ticketNumber,
                   type: scanType,

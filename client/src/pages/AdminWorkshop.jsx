@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Swal from "sweetalert2";
 import Sidebar from "../components/admin/Sidebar";
+import adminApi from "../utils/adminApi";
 
 const AdminWorkshop = () => {
   const [isCreated, setIsCreated] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [workshop, setWorkshop] = useState({
     title: "",
@@ -23,16 +25,10 @@ const AdminWorkshop = () => {
     loadWorkshop();
   }, []);
 
-  // ==========================
-  // Load Workshop
-  // ==========================
-
   const loadWorkshop = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/workshop`
-        
-      );
+      setLoading(true);
+      const res = await adminApi.get("/api/workshop");
 
       const data = res.data.workshop;
 
@@ -63,6 +59,8 @@ const AdminWorkshop = () => {
 
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,20 +83,21 @@ const AdminWorkshop = () => {
     e.preventDefault();
 
     try {
+      setSaving(true);
 
       let res;
 
       if (isCreated) {
 
-        res = await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/workshop`,
+        res = await adminApi.put(
+          "/api/workshop",
           workshop
         );
 
       } else {
 
-        res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/workshop/create`,
+        res = await adminApi.post(
+          "/api/workshop/create",
           workshop
         );
 
@@ -123,6 +122,8 @@ const AdminWorkshop = () => {
           "Something went wrong",
       });
 
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -323,13 +324,14 @@ const AdminWorkshop = () => {
 
           <button
             type="submit"
-            className={`mt-8 w-full sm:w-auto px-8 py-3 rounded-lg text-white font-semibold transition ${
+            disabled={loading || saving}
+            className={`mt-8 w-full sm:w-auto px-8 py-3 rounded-lg text-white font-semibold transition disabled:opacity-60 ${
               isCreated
                 ? "bg-blue-600 hover:bg-blue-700"
                 : "bg-green-600 hover:bg-green-700"
             }`}
           >
-            {isCreated
+            {loading ? "Loading…" : saving ? "Saving…" : isCreated
               ? "Update Workshop"
               : "Create Workshop"}
           </button>

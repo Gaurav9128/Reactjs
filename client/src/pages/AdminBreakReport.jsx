@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
+import adminApi from "../utils/adminApi";
 
 const AdminBreakReport = () => {
   const [breaks, setBreaks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -12,10 +13,13 @@ const AdminBreakReport = () => {
 
   const loadBreaks = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/report/break`);
+      setLoading(true);
+      const res = await adminApi.get("/api/report/break");
       setBreaks(res.data.breaks);
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,97 +29,120 @@ const AdminBreakReport = () => {
       .includes(search.toLowerCase())
   );
 
+  const formatDate = (value) =>
+    value ? new Date(value).toLocaleString() : "-";
+
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
       <Sidebar />
 
-      <div className="ml-72 w-full p-8">
+      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
 
-        <h1 className="text-3xl font-bold mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6">
           Break Report
         </h1>
 
         <input
           type="text"
           placeholder="Search Student..."
-          className="border p-3 rounded-lg w-full mb-6"
+          className="w-full border rounded-lg p-3 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={search}
-          onChange={(e)=>setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
         />
 
-        <table className="w-full bg-white shadow rounded-lg">
+        <div className="bg-white rounded-xl shadow overflow-hidden">
 
-          <thead>
+          <div className="overflow-x-auto">
 
-            <tr className="bg-orange-500 text-white">
+            <table className="min-w-[850px] w-full">
 
-              <th className="p-3">Student</th>
-              <th className="p-3">College</th>
-              <th className="p-3">Day</th>
-              <th className="p-3">Break Out</th>
-              <th className="p-3">Return</th>
-              <th className="p-3">Minutes</th>
-              <th className="p-3">Status</th>
+              <thead>
 
-            </tr>
+                <tr className="bg-orange-500 text-white">
 
-          </thead>
+                  <th className="p-3 text-left">Student</th>
+                  <th className="p-3 text-left">College</th>
+                  <th className="p-3 text-left">Day</th>
+                  <th className="p-3 text-left">Break Out</th>
+                  <th className="p-3 text-left">Return</th>
+                  <th className="p-3 text-left">Minutes</th>
+                  <th className="p-3 text-left">Status</th>
 
-          <tbody>
+                </tr>
 
-            {filtered.map((item)=>(
+              </thead>
 
-              <tr key={item._id} className="border-b">
+              <tbody>
 
-                <td className="p-3">
-                  {item.studentId?.fullName}
-                </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-8 text-gray-500">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-8 text-gray-500">
+                      No Breaks Found
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((item) => (
 
-                <td className="p-3">
-                  {item.studentId?.college}
-                </td>
+                    <tr key={item._id} className="border-b hover:bg-gray-50 transition">
 
-                <td className="p-3">
-                  Day {item.dayNumber}
-                </td>
+                      <td className="p-3 whitespace-nowrap">
+                        {item.studentId?.fullName}
+                      </td>
 
-                <td className="p-3">
-                  {new Date(item.breakOutTime).toLocaleString()}
-                </td>
+                      <td className="p-3 whitespace-nowrap">
+                        {item.studentId?.college}
+                      </td>
 
-                <td className="p-3">
-                  {item.returnTime
-                    ? new Date(item.returnTime).toLocaleString()
-                    : "-"}
-                </td>
+                      <td className="p-3 whitespace-nowrap">
+                        Day {item.dayNumber}
+                      </td>
 
-                <td className="p-3">
-                  {item.totalMinutes}
-                </td>
+                      <td className="p-3 whitespace-nowrap">
+                        {formatDate(item.breakOutTime)}
+                      </td>
 
-                <td className="p-3">
+                      <td className="p-3 whitespace-nowrap">
+                        {formatDate(item.returnTime)}
+                      </td>
 
-                  <span
-                    className={`px-3 py-1 rounded text-white ${
-                      item.status==="RETURNED"
-                      ? "bg-green-600"
-                      : item.status==="TIMEOUT"
-                      ? "bg-red-600"
-                      : "bg-yellow-500"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
+                      <td className="p-3 whitespace-nowrap">
+                        {item.totalMinutes ?? "-"}
+                      </td>
 
-                </td>
+                      <td className="p-3 whitespace-nowrap">
 
-              </tr>
+                        <span
+                          className={`px-3 py-1 rounded text-white ${
+                            item.status === "RETURNED"
+                              ? "bg-green-600"
+                              : item.status === "TIMEOUT"
+                              ? "bg-red-600"
+                              : "bg-yellow-500"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
 
-            ))}
+                      </td>
 
-          </tbody>
+                    </tr>
 
-        </table>
+                  ))
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
 
       </div>
 

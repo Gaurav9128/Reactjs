@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/admin/Sidebar";
+import Swal from "sweetalert2";
+import downloadBlob from "../utils/downloadBlob";
 
 const reports = [
   {
@@ -7,32 +10,53 @@ const reports = [
     icon: "👨‍🎓",
     description: "Registered Students List",
     view: "/admin/students",
-    export: `${import.meta.env.VITE_API_URL}/api/export/students`,
+    exportUrl: "/api/export/students",
+    filename: "students-report.xlsx",
   },
   {
     title: "Attendance Report",
     icon: "✅",
     description: "Day Wise Attendance",
     view: "/admin/attendance",
-    export: `${import.meta.env.VITE_API_URL}/api/export/attendance/all`,
+    exportUrl: "/api/export/attendance/all",
+    filename: "attendance-all.xlsx",
   },
   {
     title: "Break Report",
     icon: "☕",
     description: "Student Break History",
     view: "/admin/break-report",
-    export: `${import.meta.env.VITE_API_URL}/api/export/break`,
+    exportUrl: "/api/export/break",
+    filename: "break-report.xlsx",
   },
   {
     title: "Ticket Report",
     icon: "🎫",
     description: "Generated Workshop Tickets",
     view: "/admin/ticket-report",
-    export: `${import.meta.env.VITE_API_URL}/api/export/tickets`,
+    exportUrl: "/api/export/tickets",
+    filename: "tickets-report.xlsx",
   },
 ];
 
 const AdminReports = () => {
+  const [downloading, setDownloading] = useState("");
+
+  const handleExport = async (exportUrl, filename) => {
+    try {
+      setDownloading(filename);
+      await downloadBlob(exportUrl, filename);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Export Failed",
+        text: err.response?.data?.message || "Something went wrong",
+      });
+    } finally {
+      setDownloading("");
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
 
@@ -77,10 +101,14 @@ const AdminReports = () => {
                 </Link>
 
                 <a
-                  href={item.export}
+                  href={item.exportUrl}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleExport(item.exportUrl, item.filename);
+                  }}
                   className="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg transition"
                 >
-                  Export
+                  {downloading === item.filename ? "Exporting…" : "Export"}
                 </a>
 
               </div>
@@ -104,10 +132,14 @@ const AdminReports = () => {
           </p>
 
           <a
-            href={`${import.meta.env.VITE_API_URL}/api/export/attendance/all`}
+            href="/api/export/attendance/all"
+            onClick={(e) => {
+              e.preventDefault();
+              handleExport("/api/export/attendance/all", "workshop-complete.xlsx");
+            }}
             className="inline-block w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition"
           >
-            Export Complete Report
+            {downloading === "workshop-complete.xlsx" ? "Exporting…" : "Export Complete Report"}
           </a>
 
         </div>

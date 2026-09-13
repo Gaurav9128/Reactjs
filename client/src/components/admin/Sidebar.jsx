@@ -18,6 +18,7 @@ const Sidebar = () => {
 
   const logout = () => {
     localStorage.removeItem("admin");
+    localStorage.removeItem("adminToken");
     window.location.href = "/admin/login";
   };
 

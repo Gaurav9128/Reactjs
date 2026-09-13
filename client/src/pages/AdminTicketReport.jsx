@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
+import adminApi from "../utils/adminApi";
 
 const AdminTicketReport = () => {
 
   const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -13,11 +14,9 @@ const AdminTicketReport = () => {
 
   const loadTickets = async () => {
     try {
+      setLoading(true);
 
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/report/tickets`
-        
-      );
+      const res = await adminApi.get("/api/report/tickets");
 
       setTickets(res.data.tickets);
 
@@ -25,6 +24,8 @@ const AdminTicketReport = () => {
 
       console.log(err);
 
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,7 +99,13 @@ const AdminTicketReport = () => {
 
               <tbody>
 
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-8 text-gray-500">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
 
                   <tr>
 

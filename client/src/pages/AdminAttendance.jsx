@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
 import adminApi from "../utils/adminApi";
+import Swal from "sweetalert2";
+import downloadBlob from "../utils/downloadBlob";
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
@@ -11,6 +12,8 @@ const AdminAttendance = () => {
   useEffect(() => {
     loadAttendance();
   }, []);
+
+  const [exporting, setExporting] = useState(false);
 
   const loadAttendance = async (
     searchText = search,
@@ -39,9 +42,19 @@ const AdminAttendance = () => {
     (item) => item.status === "PRESENT"
   ).length;
 
-  const exportExcel = () => {
-    window.location.href =
-      `${import.meta.env.VITE_API_URL}/api/export/attendance/all`;
+  const exportExcel = async () => {
+    try {
+      setExporting(true);
+      await downloadBlob("/api/export/attendance/all", "attendance-all.xlsx");
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Export Failed",
+        text: err.response?.data?.message || "Something went wrong",
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const printAttendance = () => {
@@ -96,12 +109,13 @@ const AdminAttendance = () => {
               <option value="5">Day 5</option>
             </select>
 
-            <button
-              onClick={exportExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition w-full lg:w-auto"
-            >
-              Export
-            </button>
+              <button
+                onClick={exportExcel}
+                disabled={exporting}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-6 py-3 rounded-lg transition w-full lg:w-auto"
+              >
+                {exporting ? "Exporting…" : "Export"}
+              </button>
 
             <button
               onClick={printAttendance}
