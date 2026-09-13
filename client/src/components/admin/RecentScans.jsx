@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import {
   User,
   Calendar,
@@ -8,15 +7,14 @@ import {
   LogOut,
   RotateCcw,
 } from "lucide-react";
+import adminApi from "../../utils/adminApi";
 
 const RecentScans = () => {
   const [scans, setScans] = useState([]);
 
   const loadScans = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/recent-scans`
-      );
+      const res = await adminApi.get("/api/recent-scans");
 
       setScans(res.data.scans || []);
     } catch (err) {

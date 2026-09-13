@@ -1,7 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import { Search, Loader2 } from "lucide-react";
 import Swal from "sweetalert2";
+import adminApi from "../../utils/adminApi";
 
 const ScannerForm = ({ setResult, scanType }) => {
   const [ticketNumber, setTicketNumber] = useState("");
@@ -22,13 +22,10 @@ const ScannerForm = ({ setResult, scanType }) => {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/attendance/scan`,
-        {
+      const res = await adminApi.post("/api/attendance/scan", {
           ticketNumber: ticketNumber.trim(),
           type: scanType,
-        }
-      );
+        });
 
       setResult({
         success: true,
@@ -36,18 +33,63 @@ const ScannerForm = ({ setResult, scanType }) => {
         data: res.data.ticket,
       });
 
-      Swal.fire({
-        icon: "success",
-        title:
-          scanType === "ENTRY"
-            ? "Attendance Marked"
-            : scanType === "BREAK_OUT"
-            ? "Break Out Successful"
-            : "Student Returned",
-        text: res.data.message,
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      if (res.data.action === "TIMEOUT" && scanType === "RETURN") {
+        const result = await Swal.fire({
+          icon: "warning",
+          title: "Break Timed Out",
+          text: `Student was out for ${res.data.totalMinutes} minutes. Allow return?`,
+          showDenyButton: true,
+          confirmButtonText: "✅ Allow",
+          denyButtonText: "❌ Cancel",
+          focusDeny: false,
+        });
+
+        const action = result.isConfirmed ? "ALLOW" : "CANCEL";
+
+        try {
+          const actionRes = await adminApi.post(
+            "/api/admin/tickets/return-timeout",
+            {
+              ticketNumber: ticketNumber.trim(),
+              action,
+            }
+          );
+
+          if (actionRes.data.success) {
+            Swal.fire({
+              icon: "success",
+              title:
+                action === "ALLOW"
+                  ? "Tickets Re-enabled"
+                  : "Tickets Cancelled",
+              text: actionRes.data.message,
+              timer: 1500,
+              showConfirmButton: false,
+            });
+          }
+        } catch (err) {
+          Swal.fire({
+            icon: "error",
+            title: "Action Failed",
+            text:
+              err.response?.data?.message ||
+              "Something went wrong",
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: "success",
+          title:
+            scanType === "ENTRY"
+              ? "Attendance Marked"
+              : scanType === "BREAK_OUT"
+              ? "Break Out Successful"
+              : "Student Returned",
+          text: res.data.message,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
 
       setTicketNumber("");
 

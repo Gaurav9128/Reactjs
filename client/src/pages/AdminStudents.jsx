@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";

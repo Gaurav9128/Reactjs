@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import Sidebar from "../components/admin/Sidebar";
 import adminApi from "../utils/adminApi";
-import Swal from "sweetalert2";
 
 const AdminStudentDetails = () => {
   const { studentId } = useParams();

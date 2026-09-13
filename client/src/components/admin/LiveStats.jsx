@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Users,
   Building2,
@@ -8,6 +7,7 @@ import {
   AlertTriangle,
   Ban,
 } from "lucide-react";
+import adminApi from "../../utils/adminApi";
 
 const LiveStats = () => {
 
@@ -24,9 +24,7 @@ const LiveStats = () => {
 
     try {
 
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/dashboard/live-stats`
-      );
+      const res = await adminApi.get("/api/dashboard/live-stats");
 
       setStats(res.data.stats);
 
