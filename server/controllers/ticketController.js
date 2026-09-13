@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const Attendance = require("../models/Attendance");
 const Register = require("../models/Register");
 const TicketRequest = require("../models/TicketRequest");
+const BreakLog = require("../models/BreakLog");
 const sendTicketsEmail = require("../utils/sendTicketsEmail");
 
 // ==========================================
@@ -360,6 +361,10 @@ exports.resolveBreakTimeout = async (req, res) => {
     }
 
     if (action === "ALLOW") {
+      // Resolve today's break: mark the student as returned
+      ticket.breakStatus = "RETURNED";
+      await ticket.save();
+
       // Re-enable remaining future tickets
       await Ticket.updateMany(
         {
@@ -375,16 +380,40 @@ exports.resolveBreakTimeout = async (req, res) => {
         }
       );
 
+      // Close the timeout break log as returned
+      await BreakLog.updateOne(
+        {
+          ticketId: ticket._id,
+          status: "TIMEOUT",
+        },
+        {
+          $set: { status: "RETURNED" },
+        }
+      );
+
       return res.status(200).json({
         success: true,
-        message: "Remaining tickets re-enabled",
+        message: "Return allowed. Remaining tickets re-enabled.",
       });
     }
 
-    // CANCEL: keep remaining tickets cancelled (already done)
+    // CANCEL: cancel the student's remaining future tickets
+    await Ticket.updateMany(
+      {
+        studentId: ticket.studentId,
+        dayNumber: { $gt: ticket.dayNumber },
+      },
+      {
+        $set: {
+          status: "CANCELLED",
+          isCancelled: true,
+        },
+      }
+    );
+
     return res.status(200).json({
       success: true,
-      message: "Remaining tickets remain cancelled",
+      message: "Remaining tickets cancelled",
     });
 
   } catch (err) {
@@ -433,6 +462,19 @@ exports.requestReEnable = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Ticket is not cancelled",
+      });
+    }
+
+    // Block requests for already-elapsed workshop days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const workshopDate = new Date(ticket.workshopDate);
+    workshopDate.setHours(0, 0, 0, 0);
+
+    if (workshopDate.getTime() < today.getTime()) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot request re-enable for a past workshop day",
       });
     }
 
@@ -547,31 +589,32 @@ exports.approveTicketRequest = async (req, res) => {
       });
     }
 
-    // Determine the correct status based on the ticket's workshop date
+    // Re-enable the requested ticket and all future tickets for this student.
+    // Each ticket gets a status based on its own workshop date:
+    //   past day -> stays cancelled (skip)
+    //   today    -> ENABLED (can be scanned)
+    //   future   -> UPCOMING (locked until that day)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const ticketDate = new Date(ticket.workshopDate);
-    ticketDate.setHours(0, 0, 0, 0);
-    const isSameDay = ticketDate.getTime() === today.getTime();
 
-    // Re-enable the cancelled ticket and all future tickets for this student
-    // If the ticket is for today, set status to ENABLED (can be scanned)
-    // If the ticket is for a future day, set status to UPCOMING (locked until that day)
-    const newStatus = isSameDay ? "ENABLED" : "UPCOMING";
+    const tickets = await Ticket.find({
+      studentId: request.studentId,
+      dayNumber: { $gte: ticket.dayNumber },
+      isCancelled: true,
+    });
 
-    await Ticket.updateMany(
-      {
-        studentId: request.studentId,
-        dayNumber: { $gte: ticket.dayNumber },
-        isCancelled: true,
-      },
-      {
-        $set: {
-          status: newStatus,
-          isCancelled: false,
-        },
+    for (const t of tickets) {
+      const tDate = new Date(t.workshopDate);
+      tDate.setHours(0, 0, 0, 0);
+
+      if (tDate.getTime() < today.getTime()) {
+        continue;
       }
-    );
+
+      t.isCancelled = false;
+      t.status = tDate.getTime() === today.getTime() ? "ENABLED" : "UPCOMING";
+      await t.save();
+    }
 
     return res.status(200).json({
       success: true,
