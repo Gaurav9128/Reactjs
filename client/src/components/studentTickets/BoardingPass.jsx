@@ -28,7 +28,7 @@ const BoardingPass = ({ ticket }) => {
   };
 
   return (
-    <div className="p-10 bg-gray-100">
+    <div className="p-3 bg-gray-100 sm:p-10">
 
       <div
         ref={ticketRef}
@@ -46,11 +46,11 @@ const BoardingPass = ({ ticket }) => {
 
         {/* Body */}
 
-        <div className="grid md:grid-cols-3 gap-8 p-8">
+        <div className="grid md:grid-cols-3 gap-4 sm:gap-8 p-3 sm:p-8">
 
           <div className="md:col-span-2">
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
 
               <div>
                 <p className="text-gray-500 text-sm">
@@ -146,7 +146,7 @@ const BoardingPass = ({ ticket }) => {
 
           {/* QR Code */}
 
-          <div className="flex flex-col items-center justify-center border-l">
+          <div className="flex flex-col items-center justify-center border-0 md:border-l">
 
             <QRCode
               value={JSON.stringify({

@@ -3,7 +3,7 @@ import QRCode from "react-qr-code";
 
 const VipPass = ({ ticket }) => {
   return (
-    <div className="p-10 bg-black">
+    <div className="p-3 bg-black sm:p-10">
 
       <div className="rounded-3xl overflow-hidden shadow-2xl border-2 border-yellow-500 bg-gradient-to-br from-black via-gray-900 to-black text-white">
 
@@ -14,11 +14,11 @@ const VipPass = ({ ticket }) => {
           bgColor="bg-gradient-to-r from-yellow-500 to-amber-600"
         />
 
-        <div className="grid md:grid-cols-3 gap-8 p-8">
+        <div className="grid md:grid-cols-3 gap-4 sm:gap-8 p-3 sm:p-8">
 
           <div className="md:col-span-2">
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
 
               <div>
                 <p className="text-gray-400">VIP Guest</p>
@@ -61,7 +61,7 @@ const VipPass = ({ ticket }) => {
 
           </div>
 
-          <div className="flex justify-center items-center border-l border-yellow-500">
+          <div className="flex justify-center items-center border-0 md:border-l md:border-yellow-500">
 
             <QRCode
               value={JSON.stringify({

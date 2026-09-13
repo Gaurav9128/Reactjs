@@ -3,7 +3,7 @@ import QRCode from "react-qr-code";
 
 const EventPass = ({ ticket }) => {
   return (
-    <div className="p-10 bg-gray-100">
+    <div className="p-3 bg-gray-100 sm:p-10">
 
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
 
@@ -14,11 +14,11 @@ const EventPass = ({ ticket }) => {
           bgColor="bg-gradient-to-r from-purple-700 to-pink-500"
         />
 
-        <div className="grid md:grid-cols-3 gap-8 p-8">
+        <div className="grid md:grid-cols-3 gap-4 sm:gap-8 p-3 sm:p-8">
 
           <div className="md:col-span-2">
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
 
               <div>
                 <p className="text-gray-500">Student</p>
@@ -61,7 +61,7 @@ const EventPass = ({ ticket }) => {
 
           </div>
 
-          <div className="flex justify-center items-center border-l">
+          <div className="flex justify-center items-center border-0 md:border-l">
 
             <QRCode
               value={JSON.stringify({
