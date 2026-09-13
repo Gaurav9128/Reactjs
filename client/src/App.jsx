@@ -17,11 +17,10 @@ import CommunitySection from "./components/CommunitySection";
 import Footer from "./components/Footer";
 import WorkshopSchedule from "./components/WorkshopSchedule";
 // import RegisterForm from "./components/RegisterForm";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/studentDashboard/Dashboard";
 import Login from "./components/Login";
 import AdminStudents from "./pages/AdminStudents";
 import AdminLogin from "./pages/AdminLogin";
-import AdminRegister from "./pages/AdminRegister";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminStudentDetails from "./pages/AdminStudentDetails";
 import AdminAttendance from "./pages/AdminAttendance";
@@ -29,7 +28,6 @@ import AdminWorkshop from "./pages/AdminWorkshop";
 import AdminReports from "./pages/AdminReports";
 import AdminBreakReport from "./pages/AdminBreakReport";
 import AdminTicketReport from "./pages/AdminTicketReport";
-import MyTickets from "./pages/MyTickets";
 import AdminAttendanceScanner from "./pages/AdminAttendanceScanner";
 import AdminTicketRequests from "./pages/AdminTicketRequests";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -55,6 +53,12 @@ function AppContent() {
   // Admin pages par Navbar/Footer hide
   const isAdminPage = location.pathname.startsWith("/admin");
 
+  // Hide the public footer on student app + auth pages
+  const hideFooter =
+    isAdminPage ||
+    location.pathname === "/dashboard" ||
+    location.pathname === "/login";
+
   return (
     <>
       {!isAdminPage && <Navbar />}
@@ -74,15 +78,6 @@ function AppContent() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<PrivateRoute> <Dashboard /> </PrivateRoute>}/>
-       
-        <Route
-  path="/my-tickets"
-  element={
-    <PrivateRoute>
-      <MyTickets />
-    </PrivateRoute>
-  }
-/>
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -138,7 +133,7 @@ function AppContent() {
         }/>
        </Routes>
 
-      {!isAdminPage && <Footer />}
+      {!hideFooter && <Footer />}
     </>
   );
 }
