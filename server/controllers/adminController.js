@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 exports.registerAdmin = async (req, res) => {
   try {
-    const { fullName, email, password, role } = req.body;
+    const { fullName, email, password } = req.body;
 
     const sanitizedEmail = String(email || "").trim();
     const sanitizedPassword = String(password || "").trim();
@@ -32,7 +32,7 @@ exports.registerAdmin = async (req, res) => {
       fullName: sanitizedFullName,
       email: sanitizedEmail,
       password: hashedPassword,
-      role: role || "SUB_ADMIN",
+      role: "SUB_ADMIN",
       status: "ACTIVE",
     });
 

@@ -7,6 +7,7 @@ const adminStudentRoutes = require("./routes/adminStudentRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const { requireRole, requireAdmin } = require("./middleware/roleMiddleware");
 const { adminBulkSendTicketsEmail, resolveBreakTimeout, getTicketRequests, approveTicketRequest, rejectTicketRequest } = require("./controllers/ticketController");
+const { registerAdmin } = require("./controllers/adminController");
 require("dotenv").config();
 
 const app = express();
@@ -31,6 +32,13 @@ mongoose
 app.use("/api/register", require("./routes/registerRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+
+app.post(
+  "/api/admin/register",
+  authMiddleware,
+  requireAdmin,
+  registerAdmin
+);
 app.use("/api/workshop", require("./routes/workshopRoutes"));
 app.use("/api/tickets",require("./routes/ticketRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes"));
