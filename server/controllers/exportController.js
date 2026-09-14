@@ -1,13 +1,27 @@
 const ExcelJS = require("exceljs");
 const axios = require("axios");
+const https = require("https");
 const Attendance = require("../models/Attendance");
 const Workshop = require("../models/Workshop");
 const Register = require("../models/Register");
 
 const SIGNATURE_THUMB_WIDTH = 120;
 const SIGNATURE_THUMB_HEIGHT = 40;
+const SIGNATURE_FETCH_TIMEOUT = 30000;
+const SIGNATURE_FETCH_CONCURRENCY = 20;
+
+const signatureAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: SIGNATURE_FETCH_CONCURRENCY,
+});
+
+const signatureThumbCache = new Map();
 
 const fetchSignatureBase64 = async (cloudinaryUrl) => {
+  if (signatureThumbCache.has(cloudinaryUrl)) {
+    return signatureThumbCache.get(cloudinaryUrl);
+  }
+
   try {
     const resizedUrl = cloudinaryUrl.replace(
       "/image/upload/",
@@ -15,12 +29,36 @@ const fetchSignatureBase64 = async (cloudinaryUrl) => {
     );
     const res = await axios.get(resizedUrl, {
       responseType: "arraybuffer",
-      timeout: 10000,
+      timeout: SIGNATURE_FETCH_TIMEOUT,
+      httpsAgent: signatureAgent,
     });
-    return Buffer.from(res.data).toString("base64");
+    const base64 = Buffer.from(res.data).toString("base64");
+
+    if (signatureThumbCache.size < 1000) {
+      signatureThumbCache.set(cloudinaryUrl, base64);
+    }
+
+    return base64;
   } catch {
     return null;
   }
+};
+
+const mapLimit = async (items, limit, mapper) => {
+  const results = new Array(items.length);
+  let index = 0;
+
+  const worker = async () => {
+    while (index < items.length) {
+      const current = index++;
+      results[current] = await mapper(items[current], current);
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, worker);
+  await Promise.all(workers);
+
+  return results;
 };
 
 const embedSignatureImages = (
@@ -46,12 +84,13 @@ const embedSignatureImages = (
 };
 
 const fetchSignaturesForAttendance = (attendance) =>
-  Promise.all(
-    attendance.map((item) =>
+  mapLimit(
+    attendance,
+    SIGNATURE_FETCH_CONCURRENCY,
+    (item) =>
       item.studentId?.signature
-        ? fetchSignatureBase64(item.studentId.signature)
+        ? Promise.resolve(fetchSignatureBase64(item.studentId.signature))
         : Promise.resolve(null)
-    )
   );
 
 

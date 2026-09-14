@@ -24,8 +24,23 @@ app.post("/test", (req, res) => {
   });
 });
 
+app.get("/health", (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  res.status(dbState === 1 ? 200 : 503).json({
+    success: true,
+    status: "ok",
+    db: dbState === 1 ? "connected" : `state:${dbState}`,
+    uptime: Math.round(process.uptime()),
+  });
+});
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 30000,
+    connectTimeoutMS: 30000,
+    socketTimeoutMS: 30000,
+    maxPoolSize: 10,
+  })
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
@@ -108,7 +123,7 @@ app.post(
 );
 
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server Running on ${PORT}`);
