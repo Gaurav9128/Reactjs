@@ -45,7 +45,13 @@ const AdminAttendance = () => {
   const exportExcel = async () => {
     try {
       setExporting(true);
-      await downloadBlob("/api/export/attendance/all", "attendance-all.xlsx");
+      const url = day
+        ? `/api/export/attendance/day/${day}`
+        : "/api/export/attendance/all";
+      const filename = day
+        ? `attendance-day-${day}.xlsx`
+        : "attendance-all.xlsx";
+      await downloadBlob(url, filename);
     } catch (err) {
       Swal.fire({
         icon: "error",

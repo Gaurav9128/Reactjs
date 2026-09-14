@@ -1,7 +1,58 @@
 const ExcelJS = require("exceljs");
+const axios = require("axios");
 const Attendance = require("../models/Attendance");
 const Workshop = require("../models/Workshop");
 const Register = require("../models/Register");
+
+const SIGNATURE_THUMB_WIDTH = 120;
+const SIGNATURE_THUMB_HEIGHT = 40;
+
+const fetchSignatureBase64 = async (cloudinaryUrl) => {
+  try {
+    const resizedUrl = cloudinaryUrl.replace(
+      "/image/upload/",
+      `/image/upload/w_${SIGNATURE_THUMB_WIDTH},h_${SIGNATURE_THUMB_HEIGHT},c_fit,f_png/`
+    );
+    const res = await axios.get(resizedUrl, {
+      responseType: "arraybuffer",
+      timeout: 10000,
+    });
+    return Buffer.from(res.data).toString("base64");
+  } catch {
+    return null;
+  }
+};
+
+const embedSignatureImages = (
+  workbook,
+  worksheet,
+  sigBase64List,
+  colIndex,
+  startRowNumber
+) => {
+  sigBase64List.forEach((base64, index) => {
+    if (!base64) return;
+    const rowNumber = startRowNumber + index;
+    worksheet.getRow(rowNumber).height = 45;
+    const imageId = workbook.addImage({ base64, extension: "png" });
+    worksheet.addImage(imageId, {
+      tl: { col: colIndex, row: rowNumber - 1 },
+      ext: {
+        width: SIGNATURE_THUMB_WIDTH,
+        height: SIGNATURE_THUMB_HEIGHT,
+      },
+    });
+  });
+};
+
+const fetchSignaturesForAttendance = (attendance) =>
+  Promise.all(
+    attendance.map((item) =>
+      item.studentId?.signature
+        ? fetchSignatureBase64(item.studentId.signature)
+        : Promise.resolve(null)
+    )
+  );
 
 
 // ==============================
@@ -575,13 +626,15 @@ exports.exportDayAttendance = async (req, res) => {
       dayNumber,
     }).populate(
       "studentId",
-      "fullName email mobile college branch year"
+      "fullName email mobile college branch signature"
     );
+
+    const signatureImages = await fetchSignaturesForAttendance(attendance);
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`Day ${dayNumber}`);
 
-    worksheet.mergeCells("A1:J1");
+    worksheet.mergeCells("A1:I1");
     worksheet.getCell("A1").value =
       `${workshop?.title || "Workshop"} - Day ${dayNumber} Attendance Report`;
 
@@ -597,11 +650,11 @@ exports.exportDayAttendance = async (req, res) => {
       { header: "Student Name", key: "name", width: 25 },
       { header: "Email", key: "email", width: 30 },
       { header: "Mobile", key: "mobile", width: 18 },
-      { header: "College", key: "college", width: 30 },
+      { header: "College", key: "college", width: 25 },
       { header: "Branch", key: "branch", width: 18 },
-      { header: "Year", key: "year", width: 10 },
       { header: "Status", key: "status", width: 15 },
       { header: "Attendance Time", key: "time", width: 30 },
+      { header: "Signature", key: "signature", width: 18 },
     ];
 
     attendance.forEach((item, index) => {
@@ -612,11 +665,14 @@ exports.exportDayAttendance = async (req, res) => {
         mobile: item.studentId?.mobile,
         college: item.studentId?.college,
         branch: item.studentId?.branch,
-        year: item.studentId?.year,
         status: item.status,
-        time: item.attendanceTime,
+        time: item.attendanceTime
+          ? new Date(item.attendanceTime).toLocaleTimeString("en-IN")
+          : "-",
       });
     });
+
+    embedSignatureImages(workbook, worksheet, signatureImages, 8, 4);
 
     worksheet.addRow([]);
     worksheet.addRow({
@@ -721,14 +777,17 @@ exports.exportCompleteWorkshop = async (req, res) => {
         { header: "Branch", key: "branch", width: 18 },
         { header: "Status", key: "status", width: 15 },
         { header: "Attendance Time", key: "time", width: 30 },
+        { header: "Signature", key: "signature", width: 18 },
       ];
 
       const attendance = await Attendance.find({
         dayNumber: day,
       }).populate(
         "studentId",
-        "fullName email mobile college branch"
+        "fullName email mobile college branch signature"
       );
+
+      const signatureImages = await fetchSignaturesForAttendance(attendance);
 
       attendance.forEach((item, index) => {
 
@@ -740,8 +799,8 @@ exports.exportCompleteWorkshop = async (req, res) => {
           college: item.studentId?.college,
           branch: item.studentId?.branch,
           workshopDate: item.workshopDate
-    ? new Date(item.workshopDate).toLocaleDateString("en-IN")
-    : "-",
+      ? new Date(item.workshopDate).toLocaleDateString("en-IN")
+      : "-",
           status: item.status,
           time: item.attendanceTime
     ? new Date(item.attendanceTime).toLocaleTimeString("en-IN")
@@ -749,6 +808,8 @@ exports.exportCompleteWorkshop = async (req, res) => {
         });
 
       });
+
+      embedSignatureImages(workbook, sheet, signatureImages, 8, 2);
 
       sheet.addRow([]);
 
