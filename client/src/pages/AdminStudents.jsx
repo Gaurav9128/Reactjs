@@ -1,31 +1,63 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../components/admin/Sidebar";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import {
+  Users,
+  Building2,
+  GraduationCap,
+  Search,
+  Mail,
+  Eye,
+  X,
+} from "lucide-react";
 import adminApi from "../utils/adminApi";
+import {
+  AdminLayout,
+  PageHeader,
+  StatCard,
+  DataTable,
+  Avatar,
+  StatusBadge,
+  EmptyState,
+  Button,
+} from "../components/ui";
 
 const AdminStudents = () => {
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
   const [sendingAll, setSendingAll] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadStudents();
-  }, []);
-
-  const loadStudents = async (query = "") => {
+  const fetchStudents = async (query = "") => {
     try {
       const res = await adminApi.get(
         `/api/admin/students/search?query=${query}`
-        
       );
 
-      setStudents(res.data.students);
+      return res.data.students;
     } catch (err) {
       console.log(err);
+      return null;
     }
   };
+
+  const loadStudents = async (query = "") => {
+    setLoading(true);
+
+    const result = await fetchStudents(query);
+    setStudents(result || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchStudents("").then((result) => {
+      if (result) {
+        setStudents(result);
+        setLoading(false);
+      }
+    });
+  }, []);
 
   const handleBulkSendTickets = async () => {
     try {
@@ -53,7 +85,6 @@ const AdminStudents = () => {
         title: "Bulk Ticket Email",
         text: message,
       });
-
     } catch (err) {
       Swal.fire({
         icon: "error",
@@ -64,133 +95,149 @@ const AdminStudents = () => {
     }
   };
 
-  return (
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
-      <Sidebar />
+  const totalColleges = new Set(
+    students.map((s) => s.college).filter(Boolean)
+  ).size;
 
-      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
-        {/* Heading */}
+  const totalBranches = new Set(
+    students.map((s) => s.branch).filter(Boolean)
+  ).size;
 
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Student Management
-            </h1>
-
-            <p className="text-gray-500 mt-1 text-sm sm:text-base">
-              Search and manage workshop students
-            </p>
-          </div>
-
-          <button
-            onClick={handleBulkSendTickets}
-            disabled={sendingAll}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
-          >
-            {sendingAll ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Sending...
-              </>
-            ) : (
-              "📧 Send All Tickets"
-            )}
-          </button>
+  const columns = [
+    {
+      key: "student",
+      label: "Student",
+      render: (student) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={student.fullName} size={34} />
+          <span className="font-medium text-navy whitespace-nowrap">
+            {student.fullName}
+          </span>
         </div>
+      ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      render: (student) => (
+        <span className="text-slate-500">{student.email}</span>
+      ),
+    },
+    { key: "mobile", label: "Mobile", render: (s) => s.mobile },
+    { key: "college", label: "College", render: (s) => s.college },
+    { key: "branch", label: "Branch", render: (s) => s.branch },
+    {
+      key: "status",
+      label: "Status",
+      render: (student) => <StatusBadge status={student.status} />,
+    },
+    {
+      key: "actions",
+      label: "Action",
+      className: "text-center",
+      render: (student) => (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={Eye}
+          onClick={() => navigate(`/admin/students/${student._id}`)}
+        >
+          View
+        </Button>
+      ),
+    },
+  ];
 
-        {/* Search */}
+  return (
+    <AdminLayout>
+      <PageHeader
+        icon={Users}
+        title="Student Management"
+        description="Search and manage workshop students"
+        actions={
+          <Button
+            icon={Mail}
+            loading={sendingAll}
+            onClick={handleBulkSendTickets}
+          >
+            Send All Tickets
+          </Button>
+        }
+      />
 
-        <input
-          type="text"
-          placeholder="Search Student..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            loadStudents(e.target.value);
-          }}
-          className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {/* Student Statistics */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 mb-6">
+        <StatCard
+          icon={Users}
+          label="Total Students"
+          value={students.length}
+          supporting="Registered participants"
         />
 
-        {/* Table */}
+        <StatCard
+          icon={Building2}
+          label="Colleges"
+          value={totalColleges}
+          supporting="Participating institutions"
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
 
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-[850px] w-full">
-              <thead>
-                <tr className="bg-blue-600 text-white">
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Name
-                  </th>
+        <StatCard
+          icon={GraduationCap}
+          label="Branches"
+          value={totalBranches}
+          supporting="Academic streams covered"
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+        />
+      </section>
 
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Email
-                  </th>
+      {/* Search / Filter Area */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-4 focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-300 transition-all">
+          <Search size={18} className="text-slate-400 shrink-0" />
 
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Mobile
-                  </th>
+          <input
+            type="text"
+            placeholder="Search students by name, email, mobile, college or branch..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              loadStudents(e.target.value);
+            }}
+            className="w-full py-3 bg-transparent text-sm focus:outline-none placeholder:text-slate-400"
+          />
 
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    College
-                  </th>
-
-                  <th className="px-4 py-3 text-center whitespace-nowrap">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {students.length > 0 ? (
-                  students.map((student) => (
-                    <tr
-                      key={student._id}
-                      className="border-b hover:bg-gray-50 transition"
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {student.fullName}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {student.email}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {student.mobile}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {student.college}
-                      </td>
-
-                      <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <button
-                          onClick={() =>
-                            navigate(`/admin/students/${student._id}`)
-                          }
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="text-center py-10 text-gray-500"
-                    >
-                      No Students Found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {search && (
+            <button
+              onClick={() => {
+                setSearch("");
+                loadStudents("");
+              }}
+              className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
-    </div>
+
+      {/* Students Table */}
+      <DataTable
+        columns={columns}
+        data={students}
+        loading={loading}
+        minWidth={1000}
+        emptyState={
+          <EmptyState
+            icon={Users}
+            title="No Students Found"
+            description="Students who register for the workshop will appear here. Try a different search."
+          />
+        }
+      />
+    </AdminLayout>
   );
 };
 

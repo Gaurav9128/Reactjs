@@ -1,11 +1,27 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import Sidebar from "../components/admin/Sidebar";
+import {
+  BookOpen,
+  CalendarClock,
+  Clock,
+  Save,
+  Settings2,
+} from "lucide-react";
 import adminApi from "../utils/adminApi";
+import {
+  AdminLayout,
+  PageHeader,
+  SectionCard,
+  StatusBadge,
+  Field,
+  fieldControlClass,
+  Button,
+  Skeleton,
+} from "../components/ui";
 
 const AdminWorkshop = () => {
   const [isCreated, setIsCreated] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [workshop, setWorkshop] = useState({
@@ -21,52 +37,62 @@ const AdminWorkshop = () => {
     status: "UPCOMING",
   });
 
-  useEffect(() => {
-    loadWorkshop();
-  }, []);
-
-  const loadWorkshop = async () => {
+  const fetchWorkshop = async () => {
     try {
-      setLoading(true);
       const res = await adminApi.get("/api/workshop");
-
       const data = res.data.workshop;
 
       if (!data) {
-        setIsCreated(false);
-        return;
+        return { created: false };
       }
 
-      setIsCreated(true);
-
-      setWorkshop({
-        title: data.title || "",
-        description: data.description || "",
-        venue: data.venue || "",
-        organizer: data.organizer || "",
-        startDate: data.startDate
-          ? data.startDate.substring(0, 10)
-          : "",
-        workingDays: data.workingDays || 5,
-        attendanceStartTime:
-          data.attendanceStartTime || "08:30",
-        attendanceEndTime:
-          data.attendanceEndTime || "10:00",
-        allowedBreakMinutes:
-          data.allowedBreakMinutes || 15,
-        status: data.status || "UPCOMING",
-      });
-
+      return {
+        created: true,
+        data: {
+          title: data.title || "",
+          description: data.description || "",
+          venue: data.venue || "",
+          organizer: data.organizer || "",
+          startDate: data.startDate ? data.startDate.substring(0, 10) : "",
+          workingDays: data.workingDays || 5,
+          attendanceStartTime: data.attendanceStartTime || "08:30",
+          attendanceEndTime: data.attendanceEndTime || "10:00",
+          allowedBreakMinutes: data.allowedBreakMinutes || 15,
+          status: data.status || "UPCOMING",
+        },
+      };
     } catch (err) {
       console.log(err);
-    } finally {
-      setLoading(false);
+      return null;
     }
   };
 
-  // ==========================
-  // Handle Input Change
-  // ==========================
+  const loadWorkshop = async () => {
+    const result = await fetchWorkshop();
+
+    if (result) {
+      setIsCreated(result.created);
+      if (result.created) {
+        setWorkshop(result.data);
+      }
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchWorkshop().then((result) => {
+      if (result) {
+        setIsCreated(result.created);
+
+        if (result.created) {
+          setWorkshop(result.data);
+        }
+      }
+
+      setLoading(false);
+    });
+  }, []);
 
   const handleChange = (e) => {
     setWorkshop({
@@ -74,10 +100,6 @@ const AdminWorkshop = () => {
       [e.target.name]: e.target.value,
     });
   };
-
-  // ==========================
-  // Create / Update Workshop
-  // ==========================
 
   const saveWorkshop = async (e) => {
     e.preventDefault();
@@ -88,19 +110,9 @@ const AdminWorkshop = () => {
       let res;
 
       if (isCreated) {
-
-        res = await adminApi.put(
-          "/api/workshop",
-          workshop
-        );
-
+        res = await adminApi.put("/api/workshop", workshop);
       } else {
-
-        res = await adminApi.post(
-          "/api/workshop/create",
-          workshop
-        );
-
+        res = await adminApi.post("/api/workshop/create", workshop);
         setIsCreated(true);
       }
 
@@ -111,236 +123,198 @@ const AdminWorkshop = () => {
       });
 
       loadWorkshop();
-
     } catch (err) {
-
       Swal.fire({
         icon: "error",
         title: "Error",
-        text:
-          err.response?.data?.message ||
-          "Something went wrong",
+        text: err.response?.data?.message || "Something went wrong",
       });
-
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
+    <AdminLayout>
+      <PageHeader
+        icon={BookOpen}
+        title="Workshop Management"
+        description="Configure the workshop schedule and attendance settings"
+        actions={
+          !loading &&
+          isCreated && <StatusBadge status={workshop.status} />
+        }
+      />
 
-      <Sidebar />
-
-      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
-
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-8">
-          Workshop Management
-        </h1>
-
-        <form
-          onSubmit={saveWorkshop}
-          className="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8"
-        >
-
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Workshop Title
-              </label>
-
-              <input
-                type="text"
-                name="title"
-                value={workshop.title}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-                required
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Organizer
-              </label>
-
-              <input
-                type="text"
-                name="organizer"
-                value={workshop.organizer}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-
-            </div>
-
-            <div className="md:col-span-2">
-
-              <label className="font-semibold block mb-2">
-                Description
-              </label>
-
-              <textarea
-                rows="4"
-                name="description"
-                value={workshop.description}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3 resize-none"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Venue
-              </label>
-
-              <input
-                type="text"
-                name="venue"
-                value={workshop.venue}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Start Date
-              </label>
-
-              <input
-                type="date"
-                name="startDate"
-                value={workshop.startDate}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-                required
-              />
-
-            </div>
-
-                        <div>
-
-              <label className="font-semibold block mb-2">
-                Working Days
-              </label>
-
-              <input
-                type="number"
-                name="workingDays"
-                value={workshop.workingDays}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Allowed Break Minutes
-              </label>
-
-              <input
-                type="number"
-                name="allowedBreakMinutes"
-                value={workshop.allowedBreakMinutes}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Attendance Start Time
-              </label>
-
-              <input
-                type="time"
-                name="attendanceStartTime"
-                value={workshop.attendanceStartTime}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-semibold block mb-2">
-                Attendance End Time
-              </label>
-
-              <input
-                type="time"
-                name="attendanceEndTime"
-                value={workshop.attendanceEndTime}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              />
-
-            </div>
-
-            <div className="md:col-span-2">
-
-              <label className="font-semibold block mb-2">
-                Status
-              </label>
-
-              <select
-                name="status"
-                value={workshop.status}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-3"
-              >
-
-                <option value="UPCOMING">
-                  UPCOMING
-                </option>
-
-                <option value="ONGOING">
-                  ONGOING
-                </option>
-
-                <option value="COMPLETED">
-                  COMPLETED
-                </option>
-
-              </select>
-
-            </div>
-
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-11 w-full" />
+              </div>
+            ))}
           </div>
-
-          <button
-            type="submit"
-            disabled={loading || saving}
-            className={`mt-8 w-full sm:w-auto px-8 py-3 rounded-lg text-white font-semibold transition disabled:opacity-60 ${
-              isCreated
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
+        </div>
+      ) : (
+        <form onSubmit={saveWorkshop}>
+          {/* Workshop Details */}
+          <SectionCard
+            icon={BookOpen}
+            title="Workshop Details"
+            description="Basic information about the workshop"
+            className="mb-6"
           >
-            {loading ? "Loading…" : saving ? "Saving…" : isCreated
-              ? "Update Workshop"
-              : "Create Workshop"}
-          </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              <Field label="Workshop Title" required>
+                <input
+                  type="text"
+                  name="title"
+                  value={workshop.title}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                  required
+                />
+              </Field>
 
+              <Field label="Organizer">
+                <input
+                  type="text"
+                  name="organizer"
+                  value={workshop.organizer}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                />
+              </Field>
+
+              <Field label="Description" className="md:col-span-2">
+                <textarea
+                  rows="4"
+                  name="description"
+                  value={workshop.description}
+                  onChange={handleChange}
+                  className={`${fieldControlClass} resize-none`}
+                />
+              </Field>
+
+              <Field label="Venue">
+                <input
+                  type="text"
+                  name="venue"
+                  value={workshop.venue}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                />
+              </Field>
+
+              <Field label="Start Date" required>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={workshop.startDate}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                  required
+                />
+              </Field>
+            </div>
+          </SectionCard>
+
+          {/* Schedule */}
+          <SectionCard
+            icon={CalendarClock}
+            title="Schedule"
+            description="Workshop duration and current status"
+            className="mb-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              <Field label="Working Days">
+                <input
+                  type="number"
+                  name="workingDays"
+                  value={workshop.workingDays}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                  min="1"
+                />
+              </Field>
+
+              <Field label="Status">
+                <select
+                  name="status"
+                  value={workshop.status}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                >
+                  <option value="UPCOMING">UPCOMING</option>
+                  <option value="ONGOING">ONGOING</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                </select>
+              </Field>
+            </div>
+          </SectionCard>
+
+          {/* Attendance Settings */}
+          <SectionCard
+            icon={Settings2}
+            title="Attendance Settings"
+            description="Attendance window and break allowances"
+            className="mb-6"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+              <Field label="Attendance Start Time" hint="Daily check-in opens">
+                <div className="flex items-center gap-2.5">
+                  <Clock size={18} className="text-slate-400 shrink-0" />
+                  <input
+                    type="time"
+                    name="attendanceStartTime"
+                    value={workshop.attendanceStartTime}
+                    onChange={handleChange}
+                    className={fieldControlClass}
+                  />
+                </div>
+              </Field>
+
+              <Field label="Attendance End Time" hint="Daily check-in closes">
+                <div className="flex items-center gap-2.5">
+                  <Clock size={18} className="text-slate-400 shrink-0" />
+                  <input
+                    type="time"
+                    name="attendanceEndTime"
+                    value={workshop.attendanceEndTime}
+                    onChange={handleChange}
+                    className={fieldControlClass}
+                  />
+                </div>
+              </Field>
+
+              <Field label="Allowed Break Minutes">
+                <input
+                  type="number"
+                  name="allowedBreakMinutes"
+                  value={workshop.allowedBreakMinutes}
+                  onChange={handleChange}
+                  className={fieldControlClass}
+                  min="0"
+                />
+              </Field>
+            </div>
+          </SectionCard>
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              icon={Save}
+              loading={saving}
+              size="lg"
+            >
+              {isCreated ? "Update Workshop" : "Create Workshop"}
+            </Button>
+          </div>
         </form>
-
-      </div>
-
-    </div>
+      )}
+    </AdminLayout>
   );
 };
 

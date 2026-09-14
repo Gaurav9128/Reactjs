@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import Swal from "sweetalert2";
 import adminApi from "../../utils/adminApi";
+import { Camera } from "lucide-react";
+import { SectionCard, StatusBadge } from "../ui";
 
 const QRScanner = ({ setResult, scanType }) => {
   const scannerRef = useRef(null);
@@ -195,38 +197,30 @@ const QRScanner = ({ setResult, scanType }) => {
   }, [scanType, setResult]);
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-6">
-
-      <h2 className="text-2xl font-bold mb-5">
-        📷 Live QR Scanner
-      </h2>
-
+    <SectionCard
+      icon={Camera}
+      title="Live QR Scanner"
+      description="Show the student's QR code in front of the camera"
+      bodyClassName="flex flex-col items-center"
+    >
       <div
         id="reader"
-        className="w-full h-[360px] overflow-hidden rounded-2xl border-2 border-blue-500"
+        className="w-full h-[360px] overflow-hidden rounded-2xl border-2 border-blue-200"
       />
 
-      <div className="mt-5 text-center">
-
-        <span className="inline-block bg-blue-100 text-blue-700 px-5 py-2 rounded-full font-medium">
-
-          Current Mode :{" "}
-
-          {scanType === "ENTRY"
-            ? "✅ Entry"
-            : scanType === "BREAK_OUT"
-            ? "🚶 Break Out"
-            : "↩ Return"}
-
-        </span>
-
+      <div className="mt-5">
+        <StatusBadge
+          status={
+            scanType === "ENTRY"
+              ? "Entry"
+              : scanType === "BREAK_OUT"
+              ? "Break Out"
+              : "Return"
+          }
+          tone={scanType === "ENTRY" ? "green" : scanType === "BREAK_OUT" ? "orange" : "blue"}
+        />
       </div>
-
-      <p className="text-center text-gray-500 mt-4">
-        Show the student's QR Code in front of the camera.
-      </p>
-
-    </div>
+    </SectionCard>
   );
 };
 

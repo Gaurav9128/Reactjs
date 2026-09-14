@@ -1,158 +1,92 @@
 import { useEffect, useState } from "react";
-import {
-  User,
-  Calendar,
-  Clock,
-  LogIn,
-  LogOut,
-  RotateCcw,
-} from "lucide-react";
+import { Activity, Calendar, Clock } from "lucide-react";
 import adminApi from "../../utils/adminApi";
+import { SectionCard, Avatar, StatusBadge, EmptyState } from "../ui";
 
 const RecentScans = () => {
   const [scans, setScans] = useState([]);
 
-  const loadScans = async () => {
-    try {
-      const res = await adminApi.get("/api/recent-scans");
-
-      setScans(res.data.scans || []);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   useEffect(() => {
-    loadScans();
+    let active = true;
 
-    const interval = setInterval(() => {
-      loadScans();
-    }, 3000);
+    const fetchScans = () =>
+      adminApi
+        .get("/api/recent-scans")
+        .then((res) => {
+          if (active) setScans(res.data.scans || []);
+        })
+        .catch((err) => console.log(err));
 
-    return () => clearInterval(interval);
+    fetchScans();
+
+    const interval = setInterval(fetchScans, 3000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  const getBadge = (action) => {
-    switch (action) {
-      case "ENTRY":
-        return {
-          text: "ENTRY",
-          color: "bg-green-100 text-green-700",
-          icon: <LogIn size={16} />,
-        };
-
-      case "BREAK_OUT":
-        return {
-          text: "BREAK OUT",
-          color: "bg-orange-100 text-orange-700",
-          icon: <LogOut size={16} />,
-        };
-
-      case "RETURNED":
-        return {
-          text: "RETURN",
-          color: "bg-blue-100 text-blue-700",
-          icon: <RotateCcw size={16} />,
-        };
-
-      case "TIMEOUT":
-        return {
-          text: "TIMEOUT",
-          color: "bg-red-100 text-red-700",
-          icon: <Clock size={16} />,
-        };
-
-      default:
-        return {
-          text: action,
-          color: "bg-gray-100 text-gray-700",
-          icon: <Clock size={16} />,
-        };
-    }
-  };
-
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-8">
-
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">
-          Recent Activity
-        </h2>
-
-        <span className="text-sm text-gray-500">
-          Auto Refresh : 3 sec
+    <SectionCard
+      icon={Activity}
+      title="Recent Activity"
+      description="Latest ticket scans"
+      actions={
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Live · 3 sec refresh
         </span>
-      </div>
-
+      }
+    >
       {scans.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          No Recent Activity
-        </div>
+        <EmptyState
+          icon={Activity}
+          title="No Recent Activity"
+          description="Recent ticket scans will appear here."
+        />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
+          {scans.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between gap-4 border border-slate-100 rounded-xl p-3.5 hover:bg-slate-50/70 transition-colors"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar name={item.student?.fullName} size={36} />
 
-          {scans.map((item, index) => {
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-navy text-sm truncate">
+                    {item.student?.fullName}
+                  </h3>
 
-            const badge = getBadge(item.action);
-
-            return (
-              <div
-                key={index}
-                className="border rounded-2xl p-4 hover:bg-gray-50 transition flex justify-between items-center"
-              >
-                <div>
-
-                  <div className="flex items-center gap-2">
-
-                    <User
-                      size={18}
-                      className="text-blue-600"
-                    />
-
-                    <h3 className="font-semibold">
-                      {item.student?.fullName}
-                    </h3>
-
-                  </div>
-
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-xs text-slate-400 truncate">
                     {item.student?.college}
                   </p>
-
-                  <div className="flex gap-4 mt-2 text-sm text-gray-500">
-
-                    <div className="flex items-center gap-1">
-                      <Calendar size={15} />
-                      Day {item.dayNumber}
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Clock size={15} />
-                      {new Date(item.time).toLocaleTimeString()}
-                    </div>
-
-                  </div>
-
                 </div>
-
-                <div>
-                  <span
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${badge.color}`}
-                  >
-                    {badge.icon}
-                    {badge.text}
-                  </span>
-                </div>
-
               </div>
-            );
 
-          })}
+              <div className="flex items-center gap-4 shrink-0">
+                <div className="hidden sm:flex items-center gap-1 text-xs text-slate-400">
+                  <Calendar size={14} />
+                  Day {item.dayNumber}
+                </div>
 
+                <div className="hidden md:flex items-center gap-1 text-xs text-slate-400">
+                  <Clock size={14} />
+                  {new Date(item.time).toLocaleTimeString()}
+                </div>
+
+                <StatusBadge
+                  status={item.action}
+                  tone={item.action === "RETURNED" ? "blue" : undefined}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       )}
-
-    </div>
+    </SectionCard>
   );
 };
 

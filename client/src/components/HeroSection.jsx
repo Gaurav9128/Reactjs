@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from "react";
-import homeImage from "../assets/home.png";
+import { useEffect, useState } from "react";
 import homeVideo from "../assets/Video.mp4";
-import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const [offset, setOffset] = useState(0);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setOffset(window.scrollY);

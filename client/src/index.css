@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  --color-navy: #0b1b33;
+  --color-deep-navy: #101b4b;
+  --color-primary-blue: #2563eb;
+  --color-light-blue: #eff6ff;
+  --color-page-bg: #f4f8fc;
+}
+
 html, body {
   max-width: 100vw;
   overflow-x: hidden; /* Mobile par left-right scroll bilkul band */

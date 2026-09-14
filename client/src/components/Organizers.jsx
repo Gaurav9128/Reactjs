@@ -1,4 +1,3 @@
-import React from "react";
 import chairman from "../assets/committee/person1.png";
 import president from "../assets/committee/person2.png";
 import director from "../assets/committee/person3.png";

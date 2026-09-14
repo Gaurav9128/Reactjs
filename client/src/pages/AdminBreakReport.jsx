@@ -1,27 +1,36 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../components/admin/Sidebar";
+import { Coffee, Search } from "lucide-react";
 import adminApi from "../utils/adminApi";
+import {
+  AdminLayout,
+  PageHeader,
+  DataTable,
+  Avatar,
+  StatusBadge,
+  EmptyState,
+} from "../components/ui";
 
 const AdminBreakReport = () => {
   const [breaks, setBreaks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadBreaks();
-  }, []);
-
-  const loadBreaks = async () => {
+  const fetchBreaks = async () => {
     try {
-      setLoading(true);
       const res = await adminApi.get("/api/report/break");
-      setBreaks(res.data.breaks);
+      return res.data.breaks || [];
     } catch (err) {
       console.log(err);
-    } finally {
-      setLoading(false);
+      return [];
     }
   };
+
+  useEffect(() => {
+    fetchBreaks().then((result) => {
+      setBreaks(result);
+      setLoading(false);
+    });
+  }, []);
 
   const filtered = breaks.filter((item) =>
     item.studentId?.fullName
@@ -32,121 +41,89 @@ const AdminBreakReport = () => {
   const formatDate = (value) =>
     value ? new Date(value).toLocaleString() : "-";
 
+  const columns = [
+    {
+      key: "student",
+      label: "Student",
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={item.studentId?.fullName} size={34} />
+          <span className="font-medium text-navy whitespace-nowrap">
+            {item.studentId?.fullName}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "college",
+      label: "College",
+      render: (item) => <span className="text-slate-500">{item.studentId?.college}</span>,
+    },
+    {
+      key: "day",
+      label: "Day",
+      render: (item) => <span className="font-medium text-navy">Day {item.dayNumber}</span>,
+    },
+    {
+      key: "breakOut",
+      label: "Break Out",
+      render: (item) => <span className="text-slate-500">{formatDate(item.breakOutTime)}</span>,
+    },
+    {
+      key: "return",
+      label: "Return",
+      render: (item) => <span className="text-slate-500">{formatDate(item.returnTime)}</span>,
+    },
+    {
+      key: "minutes",
+      label: "Minutes",
+      render: (item) => (
+        <span className="font-medium text-navy">
+          {item.totalMinutes ?? "-"}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (item) => <StatusBadge status={item.status} />,
+    },
+  ];
+
   return (
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
-      <Sidebar />
+    <AdminLayout>
+      <PageHeader
+        icon={Coffee}
+        title="Break Report"
+        description="Student break history across all sessions"
+      />
 
-      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
-
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6">
-          Break Report
-        </h1>
+      <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-4 mb-6 focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-300 transition-all">
+        <Search size={18} className="text-slate-400 shrink-0" />
 
         <input
           type="text"
-          placeholder="Search Student..."
-          className="w-full border rounded-lg p-3 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search student..."
+          className="w-full py-3 bg-transparent text-sm focus:outline-none placeholder:text-slate-400"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-
-          <div className="overflow-x-auto">
-
-            <table className="min-w-[850px] w-full">
-
-              <thead>
-
-                <tr className="bg-orange-500 text-white">
-
-                  <th className="p-3 text-left">Student</th>
-                  <th className="p-3 text-left">College</th>
-                  <th className="p-3 text-left">Day</th>
-                  <th className="p-3 text-left">Break Out</th>
-                  <th className="p-3 text-left">Return</th>
-                  <th className="p-3 text-left">Minutes</th>
-                  <th className="p-3 text-left">Status</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {loading ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-8 text-gray-500">
-                      Loading...
-                    </td>
-                  </tr>
-                ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-8 text-gray-500">
-                      No Breaks Found
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((item) => (
-
-                    <tr key={item._id} className="border-b hover:bg-gray-50 transition">
-
-                      <td className="p-3 whitespace-nowrap">
-                        {item.studentId?.fullName}
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap">
-                        {item.studentId?.college}
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap">
-                        Day {item.dayNumber}
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap">
-                        {formatDate(item.breakOutTime)}
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap">
-                        {formatDate(item.returnTime)}
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap">
-                        {item.totalMinutes ?? "-"}
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap">
-
-                        <span
-                          className={`px-3 py-1 rounded text-white ${
-                            item.status === "RETURNED"
-                              ? "bg-green-600"
-                              : item.status === "TIMEOUT"
-                              ? "bg-red-600"
-                              : "bg-yellow-500"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-
-                      </td>
-
-                    </tr>
-
-                  ))
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
       </div>
 
-    </div>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        loading={loading}
+        minWidth={1000}
+        emptyState={
+          <EmptyState
+            icon={Coffee}
+            title="No Break Records Found"
+            description="Break records will appear here once students take breaks."
+          />
+        }
+      />
+    </AdminLayout>
   );
 };
 

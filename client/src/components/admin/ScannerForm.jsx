@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Keyboard } from "lucide-react";
 import Swal from "sweetalert2";
 import adminApi from "../../utils/adminApi";
+import { SectionCard, Field, fieldControlClass, Button, StatusBadge } from "../ui";
 
 const ScannerForm = ({ setResult, scanType }) => {
   const [ticketNumber, setTicketNumber] = useState("");
@@ -23,9 +24,9 @@ const ScannerForm = ({ setResult, scanType }) => {
       setLoading(true);
 
       const res = await adminApi.post("/api/attendance/scan", {
-          ticketNumber: ticketNumber.trim(),
-          type: scanType,
-        });
+        ticketNumber: ticketNumber.trim(),
+        type: scanType,
+      });
 
       setResult({
         success: true,
@@ -39,8 +40,8 @@ const ScannerForm = ({ setResult, scanType }) => {
           title: "Break Timed Out",
           text: `Student was out for ${res.data.totalMinutes} minutes. Allow return?`,
           showDenyButton: true,
-          confirmButtonText: "✅ Allow",
-          denyButtonText: "❌ Cancel",
+          confirmButtonText: "Allow",
+          denyButtonText: "Cancel",
           focusDeny: false,
         });
 
@@ -71,9 +72,7 @@ const ScannerForm = ({ setResult, scanType }) => {
           Swal.fire({
             icon: "error",
             title: "Action Failed",
-            text:
-              err.response?.data?.message ||
-              "Something went wrong",
+            text: err.response?.data?.message || "Something went wrong",
           });
         }
       } else {
@@ -92,12 +91,8 @@ const ScannerForm = ({ setResult, scanType }) => {
       }
 
       setTicketNumber("");
-
     } catch (err) {
-
-      const message =
-        err.response?.data?.message ||
-        "Something went wrong";
+      const message = err.response?.data?.message || "Something went wrong";
 
       setResult({
         success: false,
@@ -109,101 +104,63 @@ const ScannerForm = ({ setResult, scanType }) => {
         title: "Scan Failed",
         text: message,
       });
-
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl p-8">
-
-      <h2 className="text-2xl font-bold mb-2">
-        🎫 Manual Attendance Scanner
-      </h2>
-
-      <p className="text-gray-500 mb-6">
-        Current Mode :
-        {" "}
-        <span
-          className={`font-semibold ${
-            scanType === "ENTRY"
-              ? "text-blue-600"
-              : scanType === "BREAK_OUT"
-              ? "text-orange-500"
-              : "text-green-600"
-          }`}
-        >
-          {scanType === "ENTRY"
-            ? "✅ Entry"
-            : scanType === "BREAK_OUT"
-            ? "🚶 Break Out"
-            : "↩ Return"}
-        </span>
-      </p>
-
-      <form
-        onSubmit={handleScan}
-        className="space-y-6"
-      >
-
-        <div>
-
-          <label className="block mb-2 font-medium text-gray-700">
-            Ticket Number
-          </label>
-
+    <SectionCard
+      icon={Keyboard}
+      title="Manual Attendance Scanner"
+      description={
+        <>
+          Current Mode:{" "}
+          <StatusBadge
+            status={
+              scanType === "ENTRY"
+                ? "Entry"
+                : scanType === "BREAK_OUT"
+                ? "Break Out"
+                : "Return"
+            }
+            tone={scanType === "ENTRY" ? "green" : scanType === "BREAK_OUT" ? "orange" : "blue"}
+          />
+        </>
+      }
+    >
+      <form onSubmit={handleScan}>
+        <Field label="Ticket Number" required className="mb-6">
           <input
             type="text"
             value={ticketNumber}
-            onChange={(e) =>
-              setTicketNumber(e.target.value)
-            }
+            onChange={(e) => setTicketNumber(e.target.value)}
             placeholder="RW-XXXXXXXXXXXX-1"
-            className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+            className={fieldControlClass}
           />
+        </Field>
 
-        </div>
-
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className={`w-full flex justify-center items-center gap-2 py-3 rounded-xl font-semibold text-white transition-all ${
-            loading
-              ? "bg-gray-500 cursor-not-allowed"
-              : scanType === "ENTRY"
-              ? "bg-blue-600 hover:bg-blue-700"
+          loading={loading}
+          size="lg"
+          className="w-full"
+          variant={
+            scanType === "ENTRY"
+              ? "primary"
               : scanType === "BREAK_OUT"
-              ? "bg-orange-500 hover:bg-orange-600"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
+              ? "danger"
+              : "success"
+          }
         >
-
-          {loading ? (
-            <>
-              <Loader2
-                size={20}
-                className="animate-spin"
-              />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Search size={20} />
-
-              {scanType === "ENTRY"
-                ? "Mark Entry"
-                : scanType === "BREAK_OUT"
-                ? "Break Out"
-                : "Return Student"}
-            </>
-          )}
-
-        </button>
-
+          {scanType === "ENTRY"
+            ? "Mark Entry"
+            : scanType === "BREAK_OUT"
+            ? "Break Out"
+            : "Return Student"}
+        </Button>
       </form>
-
-    </div>
+    </SectionCard>
   );
 };
 

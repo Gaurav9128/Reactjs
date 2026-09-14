@@ -1,4 +1,3 @@
-import React from "react";
 import { FaLinkedinIn, FaGithub, FaTwitter } from "react-icons/fa";
 
 import organizer1 from "../assets/Organizer3.jpeg";

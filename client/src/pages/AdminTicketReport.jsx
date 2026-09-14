@@ -1,33 +1,36 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../components/admin/Sidebar";
+import { Ticket, Search } from "lucide-react";
 import adminApi from "../utils/adminApi";
+import {
+  AdminLayout,
+  PageHeader,
+  DataTable,
+  Avatar,
+  StatusBadge,
+  EmptyState,
+} from "../components/ui";
 
 const AdminTicketReport = () => {
-
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadTickets();
-  }, []);
-
-  const loadTickets = async () => {
+  const fetchTickets = async () => {
     try {
-      setLoading(true);
-
       const res = await adminApi.get("/api/report/tickets");
-
-      setTickets(res.data.tickets);
-
+      return res.data.tickets || [];
     } catch (err) {
-
       console.log(err);
-
-    } finally {
-      setLoading(false);
+      return [];
     }
   };
+
+  useEffect(() => {
+    fetchTickets().then((result) => {
+      setTickets(result);
+      setLoading(false);
+    });
+  }, []);
 
   const filtered = tickets.filter((item) =>
     item.studentId?.fullName
@@ -35,166 +38,75 @@ const AdminTicketReport = () => {
       .includes(search.toLowerCase())
   );
 
+  const columns = [
+    {
+      key: "student",
+      label: "Student",
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={item.studentId?.fullName} size={34} />
+          <span className="font-medium text-navy whitespace-nowrap">
+            {item.studentId?.fullName}
+          </span>
+        </div>
+      ),
+    },
+    { key: "ticketNumber", label: "Ticket", render: (t) => t.ticketNumber },
+    {
+      key: "day",
+      label: "Day",
+      render: (item) => <span className="font-medium text-navy">Day {item.dayNumber}</span>,
+    },
+    { key: "seatNumber", label: "Seat", render: (t) => t.seatNumber || "-" },
+    {
+      key: "attendance",
+      label: "Attendance",
+      render: (item) => (
+        <StatusBadge status={item.attendance ? "Present" : "Absent"} />
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (item) => <StatusBadge status={item.status} />,
+    },
+  ];
+
   return (
+    <AdminLayout>
+      <PageHeader
+        icon={Ticket}
+        title="Ticket Report"
+        description="Generated workshop tickets overview"
+      />
 
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
-
-      <Sidebar />
-
-      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
-
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6">
-          Ticket Report
-        </h1>
-
-        {/* Search */}
+      <div className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl px-4 mb-6 focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-300 transition-all">
+        <Search size={18} className="text-slate-400 shrink-0" />
 
         <input
           type="text"
-          placeholder="Search Student..."
-          className="w-full border rounded-lg p-3 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search student..."
+          className="w-full py-3 bg-transparent text-sm focus:outline-none placeholder:text-slate-400"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
-        {/* Table */}
-
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-
-          <div className="overflow-x-auto">
-
-            <table className="min-w-[850px] w-full">
-
-              <thead>
-
-                <tr className="bg-blue-600 text-white">
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Student
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Ticket
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Day
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Seat
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Attendance
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Status
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" className="text-center py-8 text-gray-500">
-                      Loading...
-                    </td>
-                  </tr>
-                ) : filtered.length === 0 ? (
-
-                  <tr>
-
-                    <td
-                      colSpan="6"
-                      className="text-center py-8 text-gray-500"
-                    >
-                      No Tickets Found
-                    </td>
-
-                  </tr>
-
-                ) : (
-
-                  filtered.map((ticket) => (
-
-                    <tr
-                      key={ticket._id}
-                      className="border-b hover:bg-gray-50 transition"
-                    >
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {ticket.studentId?.fullName}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {ticket.ticketNumber}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        Day {ticket.dayNumber}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {ticket.seatNumber}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            ticket.attendance
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {ticket.attendance
-                            ? "Present"
-                            : "Absent"}
-                        </span>
-
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${
-                            ticket.status === "COMPLETED"
-                              ? "bg-green-600"
-                              : ticket.status === "CANCELLED"
-                              ? "bg-red-600"
-                              : "bg-yellow-500"
-                          }`}
-                        >
-                          {ticket.status}
-                        </span>
-
-                      </td>
-
-                    </tr>
-
-                  ))
-
-                )}
-
-              </tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
       </div>
 
-    </div>
-
+      <DataTable
+        columns={columns}
+        data={filtered}
+        loading={loading}
+        minWidth={900}
+        emptyState={
+          <EmptyState
+            icon={Ticket}
+            title="No Tickets Found"
+            description="Generated tickets will appear here once students are enrolled."
+          />
+        }
+      />
+    </AdminLayout>
   );
-
 };
 
 export default AdminTicketReport;

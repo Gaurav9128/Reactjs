@@ -15,18 +15,6 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // ==========================
-    // Clear Form Every Time
-    // ==========================
-    useEffect(() => {
-        setEmail("");
-        setPassword("");
-        setShowPassword(false);
-    }, []);
-
-    // ==========================
-    // If Already Logged In
-    // ==========================
     useEffect(() => {
         const token = localStorage.getItem("token");
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Users,
+  UserCheck,
   Building2,
   Coffee,
   RotateCcw,
@@ -8,9 +8,9 @@ import {
   Ban,
 } from "lucide-react";
 import adminApi from "../../utils/adminApi";
+import { StatCard } from "../ui";
 
 const LiveStats = () => {
-
   const [stats, setStats] = useState({
     present: 0,
     inside: 0,
@@ -20,106 +20,85 @@ const LiveStats = () => {
     cancelled: 0,
   });
 
-  const loadStats = async () => {
-
-    try {
-
-      const res = await adminApi.get("/api/dashboard/live-stats");
-
-      setStats(res.data.stats);
-
-    } catch (err) {
-
-      console.log(err);
-
-    }
-
-  };
-
   useEffect(() => {
+    let active = true;
 
-    loadStats();
+    const fetchStats = () =>
+      adminApi
+        .get("/api/dashboard/live-stats")
+        .then((res) => {
+          if (active) setStats(res.data.stats);
+        })
+        .catch((err) => console.log(err));
 
-    const interval = setInterval(loadStats, 3000);
+    fetchStats();
 
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchStats, 3000);
 
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const cards = [
     {
-      title: "Present",
+      label: "Present",
       value: stats.present,
-      icon: <Users size={26} />,
-      bg: "bg-green-100",
-      text: "text-green-700",
+      icon: UserCheck,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
     },
     {
-      title: "Inside Hall",
+      label: "Inside Hall",
       value: stats.inside,
-      icon: <Building2 size={26} />,
-      bg: "bg-blue-100",
-      text: "text-blue-700",
+      icon: Building2,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
     },
     {
-      title: "On Break",
+      label: "On Break",
       value: stats.onBreak,
-      icon: <Coffee size={26} />,
-      bg: "bg-orange-100",
-      text: "text-orange-700",
+      icon: Coffee,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
     },
     {
-      title: "Returned",
+      label: "Returned",
       value: stats.returned,
-      icon: <RotateCcw size={26} />,
-      bg: "bg-purple-100",
-      text: "text-purple-700",
+      icon: RotateCcw,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
     },
     {
-      title: "Timeout",
+      label: "Timeout",
       value: stats.timeout,
-      icon: <AlertTriangle size={26} />,
-      bg: "bg-red-100",
-      text: "text-red-700",
+      icon: AlertTriangle,
+      iconBg: "bg-rose-50",
+      iconColor: "text-rose-600",
     },
     {
-      title: "Cancelled",
+      label: "Cancelled",
       value: stats.cancelled,
-      icon: <Ban size={26} />,
-      bg: "bg-gray-100",
-      text: "text-gray-700",
+      icon: Ban,
+      iconBg: "bg-slate-100",
+      iconColor: "text-slate-600",
     },
   ];
 
   return (
-    <div className="grid lg:grid-cols-6 md:grid-cols-3 sm:grid-cols-2 gap-5 mb-8">
-
-      {cards.map((card, index) => (
-
-        <div
-          key={index}
-          className="bg-white rounded-2xl shadow-md p-5 hover:shadow-lg transition"
-        >
-
-          <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center ${card.bg} ${card.text}`}
-          >
-            {card.icon}
-          </div>
-
-          <h3 className="text-gray-500 mt-4 text-sm">
-            {card.title}
-          </h3>
-
-          <h1 className="text-3xl font-bold mt-2">
-            {card.value}
-          </h1>
-
-        </div>
-
+    <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-5 mb-6">
+      {cards.map((card) => (
+        <StatCard
+          key={card.label}
+          icon={card.icon}
+          label={card.label}
+          value={card.value}
+          iconBg={card.iconBg}
+          iconColor={card.iconColor}
+        />
       ))}
-
-    </div>
+    </section>
   );
 };
 

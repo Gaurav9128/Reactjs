@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, 
-  Clock, 
   Award, 
   Code, 
   Laptop, 
   CheckCircle2, 
-  ChevronRight, 
   PartyPopper,
   BookOpen
 } from 'lucide-react';

@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Sidebar from "../components/admin/Sidebar";
 import Swal from "sweetalert2";
+import {
+  FileText,
+  Users,
+  CalendarCheck,
+  Coffee,
+  Ticket,
+  Eye,
+  Download,
+  FileSpreadsheet,
+} from "lucide-react";
 import downloadBlob from "../utils/downloadBlob";
+import { AdminLayout, PageHeader, Button } from "../components/ui";
 
 const reports = [
   {
     title: "Students Report",
-    icon: "👨‍🎓",
+    icon: Users,
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
     description: "Registered Students List",
     view: "/admin/students",
     exportUrl: "/api/export/students",
@@ -15,7 +27,9 @@ const reports = [
   },
   {
     title: "Attendance Report",
-    icon: "✅",
+    icon: CalendarCheck,
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
     description: "Day Wise Attendance",
     view: "/admin/attendance",
     exportUrl: "/api/export/attendance/all",
@@ -23,7 +37,9 @@ const reports = [
   },
   {
     title: "Break Report",
-    icon: "☕",
+    icon: Coffee,
+    iconBg: "bg-amber-50",
+    iconColor: "text-amber-600",
     description: "Student Break History",
     view: "/admin/break-report",
     exportUrl: "/api/export/break",
@@ -31,7 +47,9 @@ const reports = [
   },
   {
     title: "Ticket Report",
-    icon: "🎫",
+    icon: Ticket,
+    iconBg: "bg-purple-50",
+    iconColor: "text-purple-600",
     description: "Generated Workshop Tickets",
     view: "/admin/ticket-report",
     exportUrl: "/api/export/tickets",
@@ -58,95 +76,109 @@ const AdminReports = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
+    <AdminLayout>
+      <PageHeader
+        icon={FileText}
+        title="Reports"
+        description="View and export workshop reports"
+      />
 
-      <Sidebar />
+      {/* Report Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+        {reports.map((item) => {
+          const Icon = item.icon;
 
-      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
-
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-8">
-          Reports
-        </h1>
-
-        {/* Reports Grid */}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-
-          {reports.map((item, index) => (
-
+          return (
             <div
-              key={index}
-              className="bg-white rounded-xl shadow-lg p-5 sm:p-6 lg:p-8 hover:shadow-xl transition duration-300"
+              key={item.filename}
+              className="group bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
             >
-
-              <div className="text-4xl sm:text-5xl mb-4">
-                {item.icon}
+              <div className="flex items-start justify-between gap-4">
+                <div
+                  className={`w-14 h-14 rounded-2xl ${item.iconBg} ${item.iconColor} flex items-center justify-center shrink-0`}
+                >
+                  <Icon size={26} strokeWidth={2} />
+                </div>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold">
+              <h2 className="text-xl font-bold text-navy mt-4">
                 {item.title}
               </h2>
 
-              <p className="text-gray-500 mt-2 mb-6 text-sm sm:text-base">
+              <p className="text-sm text-slate-500 mt-1 mb-6">
                 {item.description}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
-
-                <Link
-                  to={item.view}
-                  className="w-full sm:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg transition"
-                >
-                  View
+                <Link to={item.view} className="flex-1">
+                  <Button
+                    variant="secondary"
+                    icon={Eye}
+                    className="w-full"
+                  >
+                    View
+                  </Button>
                 </Link>
 
-                <a
-                  href={item.exportUrl}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleExport(item.exportUrl, item.filename);
-                  }}
-                  className="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-lg transition"
+                <Button
+                  icon={Download}
+                  loading={downloading === item.filename}
+                  onClick={() =>
+                    handleExport(item.exportUrl, item.filename)
+                  }
+                  className="flex-1"
                 >
-                  {downloading === item.filename ? "Exporting…" : "Export"}
-                </a>
-
+                  Export
+                </Button>
               </div>
+            </div>
+          );
+        })}
+      </section>
 
+      {/* Complete Workshop Report */}
+      <section
+        className="mt-6 relative overflow-hidden bg-gradient-to-r from-[#101b4b] to-[#1e3a8a] rounded-2xl shadow-sm p-6 sm:p-8"
+      >
+        <div className="absolute -right-10 -top-14 w-56 h-56 rounded-full bg-white/10" />
+
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className="hidden sm:flex w-14 h-14 rounded-2xl bg-white/15 text-white items-center justify-center shrink-0">
+              <FileSpreadsheet size={26} />
             </div>
 
-          ))}
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">
+                Complete Workshop Report
+              </h2>
 
-        </div>
+              <p className="text-sm text-blue-200 mt-1">
+                Download the complete workshop attendance report
+              </p>
+            </div>
+          </div>
 
-        {/* Complete Report */}
-
-        <div className="mt-10 bg-white rounded-xl shadow-lg p-5 sm:p-6 lg:p-8">
-
-          <h2 className="text-xl sm:text-2xl font-bold mb-5">
-            Complete Workshop Report
-          </h2>
-
-          <p className="text-gray-500 mb-6 text-sm sm:text-base">
-            Download Complete Workshop Excel Report
-          </p>
-
-          <a
-            href="/api/export/attendance/all"
-            onClick={(e) => {
-              e.preventDefault();
-              handleExport("/api/export/attendance/all", "workshop-complete.xlsx");
-            }}
-            className="inline-block w-full sm:w-auto text-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg transition"
+          <button
+            onClick={() =>
+              handleExport(
+                "/api/export/attendance/all",
+                "workshop-complete.xlsx"
+              )
+            }
+            disabled={downloading === "workshop-complete.xlsx"}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-[#101b4b] hover:bg-blue-50 font-semibold px-5 py-3 text-sm shadow-sm shadow-blue-900/20 shrink-0 transition-all duration-200 disabled:opacity-60"
           >
-            {downloading === "workshop-complete.xlsx" ? "Exporting…" : "Export Complete Report"}
-          </a>
-
+            {downloading === "workshop-complete.xlsx" ? (
+              <FileSpreadsheet size={16} className="animate-pulse" />
+            ) : (
+              <Download size={16} strokeWidth={2.2} />
+            )}
+            Export Complete Report
+          </button>
         </div>
-
-      </div>
-
-    </div>
+      </section>
+    </AdminLayout>
   );
 };
 

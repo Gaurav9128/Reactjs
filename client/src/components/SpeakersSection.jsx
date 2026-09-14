@@ -1,5 +1,3 @@
-import React from "react";
-
 const SpeakersSection = () => {
   return (
     <section className="w-full py-20 bg-white flex flex-col items-center justify-center px-4">

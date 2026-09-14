@@ -1,179 +1,89 @@
-import {
-  CheckCircle,
-  XCircle,
-  User,
-  Building,
-  Ticket,
-  Calendar,
-  Clock,
-} from "lucide-react";
+import { CheckCircle, XCircle, User, Building, Ticket, Calendar, Clock } from "lucide-react";
+import { SectionCard, EmptyState, StatusBadge } from "../ui";
 
 const ScanResult = ({ result }) => {
-
   if (!result) {
     return (
-      <div className="bg-white rounded-3xl shadow-lg p-8 flex justify-center items-center">
-
-        <div className="text-center">
-
-          <Ticket
-            size={70}
-            className="mx-auto text-gray-300"
-          />
-
-          <h2 className="text-2xl font-bold text-gray-500 mt-4">
-            No Ticket Scanned
-          </h2>
-
-          <p className="text-gray-400 mt-2">
-            Scan a ticket to view attendance details.
-          </p>
-
-        </div>
-
-      </div>
+      <SectionCard className="flex items-center justify-center" bodyClassName="flex justify-center items-center min-h-[280px]">
+        <EmptyState
+          icon={Ticket}
+          title="No Ticket Scanned"
+          description="Scan a ticket to view attendance details."
+        />
+      </SectionCard>
     );
   }
-
-  // -------------------------
-  // Error
-  // -------------------------
 
   if (!result.success) {
-
     return (
-      <div className="bg-white rounded-3xl shadow-lg p-8">
-
-        <div className="text-center">
-
-          <XCircle
-            size={70}
-            className="mx-auto text-red-500"
-          />
-
-          <h2 className="text-3xl font-bold text-red-600 mt-5">
-            Scan Failed
-          </h2>
-
-          <p className="text-gray-600 mt-3 text-lg">
-            {result.message}
-          </p>
-
+      <SectionCard className="flex items-center justify-center" bodyClassName="flex flex-col items-center justify-center min-h-[280px]">
+        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+          <XCircle size={26} strokeWidth={2} />
         </div>
 
-      </div>
+        <h2 className="text-xl font-bold text-rose-600">Scan Failed</h2>
+
+        <p className="text-sm text-slate-500 mt-1 max-w-xs text-center">
+          {result.message}
+        </p>
+      </SectionCard>
     );
-
   }
-
-  // -------------------------
-  // Success
-  // -------------------------
 
   const ticket = result.data;
 
   return (
+    <SectionCard>
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+          <CheckCircle size={26} strokeWidth={2} />
+        </div>
 
-    <div className="bg-white rounded-3xl shadow-lg p-8">
-
-      <div className="text-center mb-8">
-
-        <CheckCircle
-          size={70}
-          className="mx-auto text-green-500"
-        />
-
-        <h2 className="text-3xl font-bold text-green-600 mt-4">
+        <h2 className="text-xl font-bold text-emerald-600">
           Attendance Marked
         </h2>
-
       </div>
 
-      <div className="space-y-5">
-
-        <div className="flex items-center gap-3">
-          <User className="text-blue-600" />
-          <span className="font-semibold">
-            Student :
-          </span>
-
-          <span>
-            {ticket.studentId?.fullName}
-          </span>
-
+      <div className="space-y-4 pt-4 border-t border-slate-100">
+        <div className="flex items-center gap-3 text-sm">
+          <User size={18} className="text-blue-600 shrink-0" />
+          <span className="text-slate-500 w-20 shrink-0">Student</span>
+          <span className="font-medium text-navy truncate">{ticket.studentId?.fullName}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Building className="text-purple-600" />
-
-          <span className="font-semibold">
-            College :
-          </span>
-
-          <span>
-            {ticket.studentId?.college}
-          </span>
-
+        <div className="flex items-center gap-3 text-sm">
+          <Building size={18} className="text-purple-600 shrink-0" />
+          <span className="text-slate-500 w-20 shrink-0">College</span>
+          <span className="font-medium text-navy truncate">{ticket.studentId?.college}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-
-          <Ticket className="text-orange-600" />
-
-          <span className="font-semibold">
-            Ticket :
-          </span>
-
-          <span>
-            {ticket.ticketNumber}
-          </span>
-
+        <div className="flex items-center gap-3 text-sm">
+          <Ticket size={18} className="text-amber-600 shrink-0" />
+          <span className="text-slate-500 w-20 shrink-0">Ticket</span>
+          <span className="font-medium text-navy">{ticket.ticketNumber}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-
-          <Calendar className="text-green-600" />
-
-          <span className="font-semibold">
-            Day :
-          </span>
-
-          <span>
-            Day {ticket.dayNumber}
-          </span>
-
+        <div className="flex items-center gap-3 text-sm">
+          <Calendar size={18} className="text-emerald-600 shrink-0" />
+          <span className="text-slate-500 w-20 shrink-0">Day</span>
+          <span className="font-medium text-navy">Day {ticket.dayNumber}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-
-          <Clock className="text-red-600" />
-
-          <span className="font-semibold">
-            Time :
-          </span>
-
-          <span>
+        <div className="flex items-center gap-3 text-sm">
+          <Clock size={18} className="text-rose-600 shrink-0" />
+          <span className="text-slate-500 w-20 shrink-0">Time</span>
+          <span className="font-medium text-navy">
             {ticket.attendanceTime
               ? new Date(ticket.attendanceTime).toLocaleString()
               : "Just Now"}
           </span>
-
         </div>
-
-        <div className="pt-4">
-
-          <span className="px-5 py-2 rounded-full bg-green-100 text-green-700 font-bold">
-
-            {ticket.status}
-
-          </span>
-
-        </div>
-
       </div>
 
-    </div>
-
+      <div className="mt-6 pt-4 border-t border-slate-100 flex justify-center">
+        <StatusBadge status={ticket.status} />
+      </div>
+    </SectionCard>
   );
 };
 

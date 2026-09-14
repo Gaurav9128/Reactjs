@@ -1,4 +1,3 @@
-import React from "react";
 import { Mail, Phone, Users, Star } from "lucide-react";
 
 const SponsorsPartners = () => {

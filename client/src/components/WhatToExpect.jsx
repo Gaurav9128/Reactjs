@@ -5,33 +5,6 @@ import {
 } from "lucide-react";
 
 const WhatToExpect = () => {
-  const features = [
-    {
-      icon: <Mic size={40} />,
-      title: "Technical Talks",
-      description:
-        "Learn React, Node.js, modern frontend architecture, performance optimization and industry best practices from experts.",
-      color: "from-purple-500 to-pink-500",
-      glow: "shadow-purple-500/30",
-    },
-    {
-      icon: <Users size={40} />,
-      title: "Networking",
-      description:
-        "Connect with fellow developers, mentors, industry professionals and like-minded tech enthusiasts.",
-      color: "from-cyan-500 to-blue-500",
-      glow: "shadow-cyan-500/30",
-    },
-    {
-      icon: <GraduationCap size={40} />,
-      title: "Hands-on Workshops",
-      description:
-        "Build real-world React projects, explore modern tools and gain practical experience during the sessions.",
-      color: "from-yellow-500 to-orange-500",
-      glow: "shadow-yellow-500/30",
-    },
-  ];
-
   return (
     <section className="relative py-24 bg-gradient-to-b from-white via-blue-50 to-white overflow-hidden">
   {/* Background Effects */}

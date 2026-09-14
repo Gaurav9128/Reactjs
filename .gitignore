@@ -40,3 +40,4 @@ Thumbs.db
 *.tmp
 *.temp
 attendance-day-4.xlsx
+ui/*

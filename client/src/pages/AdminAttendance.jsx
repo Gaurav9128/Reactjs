@@ -1,50 +1,83 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../components/admin/Sidebar";
-import adminApi from "../utils/adminApi";
 import Swal from "sweetalert2";
+import {
+  CalendarCheck,
+  Users,
+  UserCheck,
+  UserX,
+  Search,
+  Download,
+  Printer,
+} from "lucide-react";
+import adminApi from "../utils/adminApi";
 import downloadBlob from "../utils/downloadBlob";
+import {
+  AdminLayout,
+  PageHeader,
+  StatCard,
+  DataTable,
+  Avatar,
+  StatusBadge,
+  Button,
+  EmptyState,
+} from "../components/ui";
 
 const AdminAttendance = () => {
   const [attendance, setAttendance] = useState([]);
   const [search, setSearch] = useState("");
   const [day, setDay] = useState("");
-
-  useEffect(() => {
-    loadAttendance();
-  }, []);
-
   const [exporting, setExporting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const loadAttendance = async (
-    searchText = search,
-    selectedDay = day
-  ) => {
+  const fetchAttendance = async (searchText, selectedDay) => {
     try {
-      const res = await adminApi.get(
-        `/api/admin/attendance`,
-        {
-          params: {
-            search: searchText,
-            day: selectedDay,
-          },
-        }
-      );
+      const res = await adminApi.get("/api/admin/attendance", {
+        params: {
+          search: searchText,
+          day: selectedDay,
+        },
+      });
 
-      setAttendance(res.data.attendance || []);
+      return res.data.attendance || [];
     } catch (err) {
       console.log(err);
+      return [];
     }
   };
 
-  const total = attendance.length;
+  const loadAttendance = async (searchText = search, selectedDay = day) => {
+    setLoading(true);
 
+    const result = await fetchAttendance(searchText, selectedDay);
+    setAttendance(result);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    adminApi
+      .get("/api/admin/attendance", { params: { search: "", day: "" } })
+      .then((res) => {
+        setAttendance(res.data.attendance || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
+  }, []);
+
+  const total = attendance.length;
   const present = attendance.filter(
     (item) => item.status === "PRESENT"
+  ).length;
+  const absent = attendance.filter(
+    (item) => item.status === "ABSENT"
   ).length;
 
   const exportExcel = async () => {
     try {
       setExporting(true);
+
       const url = day
         ? `/api/export/attendance/day/${day}`
         : "/api/export/attendance/all";
@@ -67,207 +100,166 @@ const AdminAttendance = () => {
     window.print();
   };
 
-  return (
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
-      <Sidebar />
-
-      <div className="w-full lg:ml-72 pt-20 lg:pt-8 p-4 sm:p-6 lg:p-8">
-        {/* Heading */}
-
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            Attendance Management
-          </h1>
-
-          <p className="text-gray-500 mt-2 text-sm sm:text-base">
-            Manage and monitor workshop attendance
-          </p>
+  const columns = [
+    {
+      key: "student",
+      label: "Student",
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <Avatar name={item.studentId?.fullName} size={34} />
+          <span className="font-medium text-navy whitespace-nowrap">
+            {item.studentId?.fullName || "N/A"}
+          </span>
         </div>
+      ),
+    },
+    {
+      key: "email",
+      label: "Email",
+      render: (item) => (
+        <span className="text-slate-500">{item.studentId?.email || "N/A"}</span>
+      ),
+    },
+    {
+      key: "mobile",
+      label: "Mobile",
+      render: (item) => item.studentId?.mobile || "N/A",
+    },
+    {
+      key: "college",
+      label: "College",
+      render: (item) => item.studentId?.college || "N/A",
+    },
+    {
+      key: "branch",
+      label: "Branch",
+      render: (item) => item.studentId?.branch || "N/A",
+    },
+    {
+      key: "day",
+      label: "Day",
+      render: (item) => <span className="font-medium text-navy">Day {item.dayNumber}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (item) => <StatusBadge status={item.status} />,
+    },
+    {
+      key: "time",
+      label: "Time",
+      render: (item) => (
+        <span className="text-slate-500">
+          {item.attendanceTime
+            ? new Date(item.attendanceTime).toLocaleString()
+            : "-"}
+        </span>
+      ),
+    },
+  ];
 
-        {/* Filters */}
+  return (
+    <AdminLayout>
+      <PageHeader
+        icon={CalendarCheck}
+        title="Attendance Management"
+        description="Manage and monitor workshop attendance"
+        actions={
+          <>
+            <Button icon={Printer} variant="secondary" onClick={printAttendance}>
+              Print
+            </Button>
 
-        <div className="bg-white rounded-xl shadow-md p-4 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
+            <Button
+              icon={Download}
+              loading={exporting}
+              onClick={exportExcel}
+            >
+              {day ? `Export Day ${day}` : "Export All"}
+            </Button>
+          </>
+        }
+      />
+
+      {/* Summary cards */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-5 mb-6">
+        <StatCard
+          icon={Users}
+          label="Total Records"
+          value={total}
+          supporting="Filtered attendance records"
+        />
+
+        <StatCard
+          icon={UserCheck}
+          label="Present"
+          value={present}
+          supporting="Marked present"
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
+
+        <StatCard
+          icon={UserX}
+          label="Absent"
+          value={absent}
+          supporting="Marked absent"
+          iconBg="bg-rose-50"
+          iconColor="text-rose-600"
+        />
+      </section>
+
+      {/* Filters */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 flex-1 focus-within:ring-2 focus-within:ring-blue-200 focus-within:border-blue-300 transition-all">
+            <Search size={18} className="text-slate-400 shrink-0" />
+
             <input
               type="text"
-              placeholder="Search Student..."
-              className="border border-gray-300 rounded-lg p-3 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Search student..."
+              className="w-full py-2.5 bg-transparent text-sm focus:outline-none placeholder:text-slate-400"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 loadAttendance(e.target.value, day);
               }}
             />
-
-            <select
-              className="border border-gray-300 rounded-lg p-3 w-full lg:w-48 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={day}
-              onChange={(e) => {
-                setDay(e.target.value);
-                loadAttendance(search, e.target.value);
-              }}
-            >
-              <option value="">All Days</option>
-              <option value="1">Day 1</option>
-              <option value="2">Day 2</option>
-              <option value="3">Day 3</option>
-              <option value="4">Day 4</option>
-              <option value="5">Day 5</option>
-            </select>
-
-              <button
-                onClick={exportExcel}
-                disabled={exporting}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-6 py-3 rounded-lg transition w-full lg:w-auto"
-              >
-                {exporting ? "Exporting…" : "Export"}
-              </button>
-
-            <button
-              onClick={printAttendance}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition w-full lg:w-auto"
-            >
-              Print
-            </button>
-          </div>
-        </div>
-
-        {/* Summary Cards */}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-gray-500 text-sm uppercase tracking-wide">
-              Total Present
-            </h2>
-
-            <p className="text-3xl sm:text-4xl font-bold mt-2">
-              {total}
-            </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-gray-500 text-sm uppercase tracking-wide">
-              Present Students
-            </h2>
-
-            <p className="text-3xl sm:text-4xl font-bold text-green-600 mt-2">
-              {present}
-            </p>
-          </div>
-        </div>
-
-        {/* Attendance Table */}
-
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-[1000px] w-full">
-              <thead>
-                <tr className="bg-blue-600 text-white">
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Student
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Email
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Mobile
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    College
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Branch
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Day
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Status
-                  </th>
-
-                  <th className="px-4 py-3 text-left whitespace-nowrap">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                              {attendance.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="8"
-                      className="text-center py-10 text-gray-500"
-                    >
-                      No Attendance Found
-                    </td>
-                  </tr>
-                ) : (
-                  attendance.map((item) => (
-                    <tr
-                      key={item._id}
-                      className="border-b hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {item.studentId?.fullName || "N/A"}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {item.studentId?.email || "N/A"}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {item.studentId?.mobile || "N/A"}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {item.studentId?.college || "N/A"}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {item.studentId?.branch || "N/A"}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        Day {item.dayNumber}
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                            item.status === "PRESENT"
-                              ? "bg-green-100 text-green-700"
-                              : item.status === "ABSENT"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {item.attendanceTime
-                          ? new Date(
-                              item.attendanceTime
-                            ).toLocaleString()
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <select
+            className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-navy w-full lg:w-52 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300"
+            value={day}
+            onChange={(e) => {
+              setDay(e.target.value);
+              loadAttendance(search, e.target.value);
+            }}
+          >
+            <option value="">All Days</option>
+            <option value="1">Day 1</option>
+            <option value="2">Day 2</option>
+            <option value="3">Day 3</option>
+            <option value="4">Day 4</option>
+            <option value="5">Day 5</option>
+          </select>
         </div>
       </div>
-    </div>
+
+      {/* Attendance Table */}
+      <DataTable
+        columns={columns}
+        data={attendance}
+        loading={loading}
+        minWidth={1100}
+        emptyState={
+          <EmptyState
+            icon={CalendarCheck}
+            title="No Attendance Found"
+            description="Attendance records will appear here once students attend the workshop."
+          />
+        }
+      />
+    </AdminLayout>
   );
 };
 

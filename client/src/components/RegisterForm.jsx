@@ -3,7 +3,7 @@ import logo from "../assets/logo1.png";
 import { useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = () => {
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { FaLinkedinIn, FaGithub, FaXTwitter } from "react-icons/fa6";
 
 import Team1 from "../assets/Team1.1.jpeg";
